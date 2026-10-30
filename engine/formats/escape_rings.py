@@ -45,6 +45,7 @@ class Ring:
     a0: float
     w: float
     broken_at: float = None
+    break_xy: tuple = None
 
     def angle(self, t):
         return self.a0 + self.w * t
@@ -53,8 +54,9 @@ class Ring:
 @dataclass
 class Sim:
     rings: list
-    frames: list = field(default_factory=list)   # per frame: (t, inner, [(x, y, r)])
-    events: list = field(default_factory=list)
+    frames: list = field(default_factory=list)   # per frame: (t, inner, [(x, y, r, color_index)])
+    events: list = field(default_factory=list)   # (t, kind, pan)
+    hits: list = field(default_factory=list)     # (t, ring_index, x, y)
     escape_t: float = None
 
 
@@ -79,7 +81,7 @@ def simulate(p: dict, seed: int) -> Sim:
     for _ in range(int(p["balls"])):
         a = rng.uniform(0, 2 * math.pi)
         balls.append([CX + rng.uniform(-25, 25), CY + rng.uniform(-25, 25),
-                      V0 * math.cos(a), V0 * math.sin(a), BALL_R0])
+                      V0 * math.cos(a), V0 * math.sin(a), BALL_R0, -1])  # last: color index of last ring hit
     dt = 1 / (C.FPS * SUBSTEPS)
     t, inner, last_note = 0.0, 0, -1.0
     for _ in range(int(p["max_seconds"] * C.FPS)):
@@ -99,13 +101,16 @@ def simulate(p: dict, seed: int) -> Sim:
                     continue
                 rel = _wrap(math.atan2(dy, dx) - ring.angle(t))
                 window = ring.gap / 2 - 0.5 * math.asin(min(1.0, b[4] / ring.r))
+                pan = dx / R_MAX
                 if abs(rel) < window:
                     ring.broken_at = t
+                    ring.break_xy = (b[0], b[1])
+                    b[5] = inner
                     inner += 1
-                    sim.events.append((t, "break"))
+                    sim.events.append((t, "break", pan))
                     if inner == k:
                         sim.escape_t = t
-                        sim.events.append((t, "win"))
+                        sim.events.append((t, "win", pan))
                     continue
                 nx, ny = dx / d, dy / d
                 vn = b[2] * nx + b[3] * ny
@@ -122,42 +127,60 @@ def simulate(p: dict, seed: int) -> Sim:
                     b[2] *= f
                     b[3] *= f
                     b[4] = min(BALL_R_MAX, b[4] * (1 + p["grow_per_bounce"]))
+                    b[5] = inner
+                    sim.hits.append((t, inner, CX + nx * edge, CY + ny * edge))
                     if t - last_note > 0.06:
-                        sim.events.append((t, "bounce"))
+                        sim.events.append((t, "bounce", pan))
                         last_note = t
                 kk = (edge - b[4] - 0.5) / d
                 b[0], b[1] = CX + dx * kk, CY + dy * kk
-        sim.frames.append((t, inner, [(b[0], b[1], b[4]) for b in balls]))
+        sim.frames.append((t, inner, [(b[0], b[1], b[4], b[5]) for b in balls]))
         if sim.escape_t is not None and t >= sim.escape_t + TAIL:
             break
     if sim.escape_t is None:
-        sim.events.append((t, "end"))
+        sim.events.append((t, "end", 0.0))
     return sim
 
 
 def best_sim(p: dict, seed: int) -> Sim:
     """Deterministically try derived seeds until the escape lands in the target window."""
     hi = p["max_seconds"] - TAIL
-    fallback = None
-    for k in range(30):
-        sim = simulate(p, seed * 1000 + k)
-        if sim.escape_t is not None and MIN_ESCAPE <= sim.escape_t <= hi:
-            return sim
-        if sim.escape_t is None and fallback is None:
-            fallback = sim
-    return fallback or simulate(p, seed * 1000)
+    q = dict(p)
+    timeout = slowest = None
+    for attempt in range(5):
+        fast = 0
+        for k in range(30):
+            sim = simulate(q, seed * 1000 + attempt * 100 + k)
+            if sim.escape_t is None:
+                timeout = timeout or sim
+            elif MIN_ESCAPE <= sim.escape_t <= hi:
+                return sim
+            elif sim.escape_t < MIN_ESCAPE:
+                fast += 1
+                if slowest is None or sim.escape_t > slowest.escape_t:
+                    slowest = sim
+        # every try escaped too fast -> make it harder; otherwise easier
+        q["gap_deg"] = max(18.0, q["gap_deg"] * 0.8) if fast >= 15 else min(80.0, q["gap_deg"] * 1.2)
+    return timeout or slowest
 
 
-def _particles(seed, ring_i, ring, t_break, color):
-    rng = random.Random(seed * 7919 + ring_i)
-    out = []
-    for _ in range(46):
-        a = rng.uniform(0, 2 * math.pi)
-        sp = rng.uniform(150, 650)
-        out.append((CX + ring.r * math.cos(a), CY + ring.r * math.sin(a),
-                    sp * math.cos(a) + rng.uniform(-80, 80), sp * math.sin(a) + rng.uniform(-80, 80),
-                    rng.uniform(4, 9), t_break, color))
-    return out
+def _shards(seed, i, ring, color):
+    """The broken ring splits into spinning arc fragments that fly out and fall."""
+    rng = random.Random(seed * 7919 + i)
+    n = 16
+    span = 2 * math.pi / n
+    base = ring.angle(ring.broken_at)
+    return [(base + j * span + rng.uniform(-0.1, 0.1), span * rng.uniform(0.45, 0.8), rng.uniform(140, 460),
+             rng.uniform(-2.5, 2.5), rng.uniform(0.7, 1.1), color) for j in range(n)]
+
+
+def _shake(sim, t):
+    amp = 0.0
+    for ring in sim.rings:
+        if ring.broken_at is not None and 0 <= t - ring.broken_at < 0.4:
+            big = 26 if ring.broken_at == sim.escape_t else 11
+            amp += big * math.exp(-(t - ring.broken_at) / 0.07)
+    return amp
 
 
 def render(config: dict, writer) -> dict:
@@ -167,51 +190,88 @@ def render(config: dict, writer) -> dict:
     sim = best_sim(p, seed)
     k = len(sim.rings)
     hook = config.get("hook") or f"Can the ball escape all {k} rings?"
-    surf = pygame.Surface((C.W, C.H))
-    parts = []
+    accent = pal[0]
+    bg = C.background(accent, seed % 7)
+    glow = C.Glow(bg)
+    scene = pygame.Surface((C.W, C.H))
+    frame = pygame.Surface((C.W, C.H))
+    col = lambda i: pal[i % len(pal)]
+
+    shards, bursts = [], []
     for i, ring in enumerate(sim.rings):
         if ring.broken_at is not None:
-            parts += _particles(seed, i, ring, ring.broken_at, pal[i % len(pal)])
-    ball_col = C.WHITE
-    accent = pal[0]
+            shards.append((ring, _shards(seed, i, ring, col(i))))
+            bx, by = ring.break_xy
+            bursts.append((ring.broken_at, C.make_burst(seed * 31 + i, bx, by, [col(i), C.WHITE], n=40,
+                                                        speed=(200, 700), life=0.6, size=(4, 8))))
+    for hi, (ht, ri, hx, hy) in enumerate(sim.hits):
+        bursts.append((ht, C.make_burst(seed * 131 + hi, hx, hy, [col(ri), C.WHITE], n=9,
+                                        speed=(90, 320), life=0.3, size=(2, 4))))
+    bursts.sort(key=lambda b: b[0])
 
+    last_hit = [-9.0] * k
+    hit_ptr = 0
     for fi, (t, inner, balls) in enumerate(sim.frames):
-        surf.fill(C.BG)
+        while hit_ptr < len(sim.hits) and sim.hits[hit_ptr][0] <= t:
+            last_hit[sim.hits[hit_ptr][1]] = sim.hits[hit_ptr][0]
+            hit_ptr += 1
+        broke = [r.broken_at for r in sim.rings if r.broken_at is not None and r.broken_at <= t]
+        since_break = t - max(broke) if broke else 9.0
+        pop = math.exp(-since_break / 0.12)
+
+        scene.blit(bg, (0, 0))
+        left = k - inner
+        if left:
+            C.pop_text(scene, str(left), 260, C.WHITE, CX, CY, pop, alpha=int(38 + 60 * pop), stroke=0)
         for i in range(inner, k):
             ring = sim.rings[i]
             a = ring.angle(t)
-            C.aa_arc(surf, pal[i % len(pal)], CX, CY, ring.r, RING_THICK, a + ring.gap / 2,
-                     a + 2 * math.pi - ring.gap / 2)
-        for (x0, y0, vx, vy, r, tb, col) in parts:
-            age = t - tb
-            if 0 <= age < 0.9:
-                x = x0 + vx * age
-                y = y0 + vy * age + 600 * age * age
-                C.aa_circle(surf, (*col, int(255 * (1 - age / 0.9))), x, y, r * (1 - age / 1.2))
-        for back in range(8, 0, -1):
-            j = fi - back * 2
-            if j < 0:
-                continue
-            for (x, y, r) in sim.frames[j][2]:
-                C.aa_circle(surf, (*C.lighten(accent, 0.2), int(110 * (1 - back / 9))), x, y, r * (1 - back / 12))
-        for (x, y, r) in balls:
-            C.aa_circle(surf, (*accent, 70), x, y, r + 7)
-            C.aa_circle(surf, ball_col, x, y, r)
-        C.draw_hook(surf, hook)
-        left = k - inner
-        status = f"{left} RING{'S' if left != 1 else ''} LEFT" if left else "ESCAPED!"
-        C.blit_center(surf, C.text_surface(f"{status}   {t:4.1f}s", 64, C.lighten(accent, 0.25)), C.W / 2, 485)
-        writer.write(surf)
+            h = max(0.0, 1 - (t - last_hit[i]) / 0.15)
+            C.aa_arc(scene, C.mix(col(i), C.WHITE, 0.7 * h), CX, CY, ring.r, RING_THICK + 6 * h,
+                     a + ring.gap / 2, a + 2 * math.pi - ring.gap / 2)
+        for ring, parts in shards:
+            age = t - ring.broken_at
+            for (a0, span, vr, spin, life, c) in parts:
+                if not 0 <= age < life:
+                    continue
+                f = 1 - age / life
+                a = a0 + ring.w * ring.broken_at + spin * age
+                C.aa_arc(scene, (*C.lighten(c, 0.25 * f), int(255 * f)), CX, CY + 700 * age * age,
+                         ring.r + vr * age, max(2.0, RING_THICK * f), a, a + span * (0.5 + 0.5 * f))
+        for t0, parts in bursts:
+            if t0 > t:
+                break
+            if t - t0 < 0.8:
+                C.draw_burst(scene, parts, t - t0)
+        for bi, (x, y, r, ci) in enumerate(balls):
+            c = col(ci) if ci >= 0 else C.WHITE
+            pts = [(f[2][bi][0], f[2][bi][1]) for f in sim.frames[max(0, fi - 9):fi + 1]]
+            C.draw_trail(scene, pts, c, r * 0.9)
+            C.aa_circle(scene, (*c, 90), x, y, r + 10)
+            C.aa_circle(scene, C.mix(c, C.WHITE, 0.65), x, y, r)
+        glow.apply(scene)
 
-    last = surf.copy()
+        C.shaken(frame, scene, _shake(sim, t), t, seed % 97)
+        if sim.escape_t is not None and t >= sim.escape_t:
+            C.flash(frame, C.WHITE, 110 * math.exp(-(t - sim.escape_t) / 0.08))
+        elif broke:
+            C.flash(frame, col(inner - 1), 45 * math.exp(-since_break / 0.08))
+        C.draw_hook(frame, hook)
+        status = f"{left} RING{'S' if left != 1 else ''} LEFT" if left else "ESCAPED!"
+        C.pop_text(frame, f"{status}   {t:4.1f}s", 64, C.lighten(accent, 0.25), C.W / 2, 485, pop * 0.4)
+        writer.write(frame)
+
+    last = frame.copy()
+    confetti = None
     if sim.escape_t is not None:
         title, sub, result = "ESCAPED!", f"in {sim.escape_t:.1f}s", f"escaped in {sim.escape_t:.1f}s"
+        confetti = C.make_confetti(seed, pal)
     else:
         left = k - sim.frames[-1][1]
         noun = "ring" if left == 1 else "rings"
         title, sub, result = "TIME'S UP!", f"{left} {noun} left", f"time's up, {left} {noun} left"
     n = int(C.END_CARD_SECONDS * C.FPS)
     for i in range(n):
-        C.draw_end_card(surf, last, title, sub, accent, i / n)
-        writer.write(surf)
+        C.draw_end_card(frame, last, title, sub, accent, i / n, confetti)
+        writer.write(frame)
     return {"events": sim.events, "result": result}

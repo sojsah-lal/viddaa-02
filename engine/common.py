@@ -157,18 +157,150 @@ def aa_arc(dst, color, cx, cy, r, thickness, a0, a1, step=0.03):
     pygame.gfxdraw.aapolygon(dst, pts, color)
 
 
+def mix(a, b, k):
+    return tuple(int(x + (y - x) * k) for x, y in zip(a, b))
+
+
+# ---------- look & feel ----------
+
+@lru_cache(maxsize=4)
+def background(accent: tuple, seed: int = 0) -> pygame.Surface:
+    """Deep gradient, a faint accent glow behind the action, vignette and a few stars."""
+    import numpy as np
+    y = np.linspace(0, 1, H)[None, :, None]
+    x = np.linspace(0, 1, W)[:, None, None]
+    top, bottom = np.array([18, 14, 34]), np.array([6, 6, 14])
+    img = top * (1 - y) + bottom * y
+    d = np.sqrt(((x - 0.5) * 1.1) ** 2 + ((y - 0.55) * 0.62) ** 2)
+    img = img + np.array(accent) * 0.10 * np.clip(1 - d / 0.45, 0, 1) ** 2
+    img = img * np.clip(1.15 - d * 0.9, 0.55, 1.0)
+    surf = pygame.surfarray.make_surface(np.clip(img, 0, 255).astype(np.uint8))
+    rng = __import__("random").Random(seed)
+    for _ in range(140):
+        v = rng.randint(40, 110)
+        surf.set_at((rng.randrange(W), rng.randrange(H)), (v, v, v + 20))
+    return surf
+
+
+class Glow:
+    """Neon bloom: blur the frame at two scales, subtract the (static) background, add back."""
+    LEVELS = ((6, 0.85), (20, 0.75))
+
+    def __init__(self, bg: pygame.Surface, strength: float = 1.0):
+        self.k = strength
+        self.base = [pygame.transform.smoothscale(bg, (W // f, H // f)) for f, _ in self.LEVELS]
+
+    def apply(self, frame: pygame.Surface):
+        for (f, k), base in zip(self.LEVELS, self.base):
+            s = pygame.transform.smoothscale(frame, (W // f, H // f))
+            s.blit(base, (0, 0), special_flags=pygame.BLEND_SUB)
+            g = int(255 * min(1.0, k * self.k))
+            s.fill((g, g, g), special_flags=pygame.BLEND_MULT)
+            frame.blit(pygame.transform.smoothscale(s, (W, H)), (0, 0), special_flags=pygame.BLEND_ADD)
+
+
+def draw_trail(dst, pts, color, r0, alpha0=170, step=6.0):
+    """Comet trail through pts (oldest -> newest), tapering in size and alpha."""
+    samples = []
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        d = math.hypot(x1 - x0, y1 - y0)
+        if d > 400:  # teleport (camera cut); restart trail
+            samples = []
+            continue
+        n = max(1, int(d / step))
+        samples += [(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n) for i in range(n)]
+    n = len(samples)
+    for i, (x, y) in enumerate(samples):
+        f = (i + 1) / n
+        aa_circle(dst, (*color, int(alpha0 * f * f)), x, y, max(1.0, r0 * (0.25 + 0.75 * f)))
+
+
+def make_burst(seed, x, y, colors, n=24, speed=(150, 500), life=0.45, size=(3, 6)):
+    """Seeded spark burst: list of (x, y, vx, vy, size, life, color)."""
+    import random
+    rng = random.Random(seed)
+    out = []
+    for _ in range(n):
+        a = rng.uniform(0, 2 * math.pi)
+        sp = rng.uniform(*speed)
+        out.append((x, y, sp * math.cos(a), sp * math.sin(a), rng.uniform(*size), life * rng.uniform(0.7, 1.2),
+                    rng.choice(colors)))
+    return out
+
+
+def draw_burst(dst, parts, age, gravity=900, dy=0.0):
+    for (x, y, vx, vy, s, life, col) in parts:
+        if not 0 <= age < life:
+            continue
+        k = 1 - age / life
+        aa_circle(dst, (*lighten(col, 0.3 * k), int(255 * k)), x + vx * age, y + vy * age + 0.5 * gravity * age * age
+                  + dy, s * (0.4 + 0.6 * k))
+
+
+def make_confetti(seed, colors, n=140):
+    import random
+    rng = random.Random(seed)
+    return [(rng.uniform(0, W), rng.uniform(-1500, -40), rng.uniform(-90, 90), rng.uniform(450, 850),
+             rng.uniform(8, 16), rng.uniform(0, 6.28), rng.uniform(-9, 9), rng.choice(colors)) for _ in range(n)]
+
+
+def draw_confetti(dst, pieces, age):
+    for (x, y, vx, vy, s, a0, spin, col) in pieces:
+        px, py = x + vx * age + 30 * math.sin(age * 3 + a0), y + vy * age
+        if py < -30 or py > H + 30:
+            continue
+        a = a0 + spin * age
+        w, h = s, s * 0.5 * abs(math.cos(a * 0.7)) + 2
+        c, sn = math.cos(a), math.sin(a)
+        pts = [(px + dx * c - dy * sn, py + dx * sn + dy * c) for dx, dy in ((-w, -h), (w, -h), (w, h), (-w, h))]
+        pygame.gfxdraw.filled_polygon(dst, pts, col)
+        pygame.gfxdraw.aapolygon(dst, pts, col)
+
+
+def shaken(dst, scene, amp, t, seed=0):
+    """Blit scene onto dst with a decaying random shake of amplitude amp (px)."""
+    if amp < 0.5:
+        dst.blit(scene, (0, 0))
+        return
+    dx = amp * math.sin(t * 91.0 + seed)
+    dy = amp * math.cos(t * 77.0 + seed * 1.7)
+    dst.fill(BG)
+    dst.blit(scene, (int(dx), int(dy)))
+
+
+def flash(dst, color, alpha):
+    if alpha <= 1:
+        return
+    s = pygame.Surface((W, H), pygame.SRCALPHA)
+    s.fill((*color, int(min(255, alpha))))
+    dst.blit(s, (0, 0))
+
+
+def pop_text(dst, text, base, color, cx, cy, pop=0.0, alpha=255, stroke=5):
+    """Text that briefly scales up (pop 0..1); sizes are quantized so the glyph cache stays small."""
+    size = int(base * (1 + 0.45 * pop)) // 4 * 4
+    surf = text_surface(text, size, color, stroke)
+    if alpha < 255:
+        surf = surf.copy()
+        surf.set_alpha(alpha)
+    blit_center(dst, surf, cx, cy)
+
+
 # ---------- end card ----------
 
-def draw_end_card(dst, background, title, subtitle, accent, progress):
-    """background: frozen last scene; progress 0..1 drives fade/scale-in."""
+def draw_end_card(dst, background, title, subtitle, accent, progress, confetti=None):
+    """background: frozen last scene; progress 0..1 drives fade/scale-in; confetti from make_confetti()."""
     dst.blit(background, (0, 0))
     k = min(1.0, progress / 0.25)
     shade = pygame.Surface((W, H), pygame.SRCALPHA)
     # tinted, not black, so blackdetect never flags the end card
     shade.fill((*(int(v * 0.35) + 18 for v in accent), int(215 * k)))
     dst.blit(shade, (0, 0))
-    ease = 1 - (1 - k) ** 3
-    title_size = int(150 * (0.7 + 0.3 * ease))
+    if confetti:
+        draw_confetti(dst, confetti, progress * END_CARD_SECONDS + 0.3)
+    # back-out ease: overshoots slightly, then settles
+    ease = 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2
+    title_size = max(40, int(150 * (0.55 + 0.45 * ease)) // 4 * 4)
     draw_lines(dst, wrap(clean_text(title).upper(), title_size, 980), title_size, accent, W / 2, 820, stroke=7)
     draw_lines(dst, wrap(clean_text(subtitle), 84, 960), 84, WHITE, W / 2, 1010, stroke=5)
     if progress > 0.3:

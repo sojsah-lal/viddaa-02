@@ -62,8 +62,8 @@ class Sim:
     pegs: list
     rows: dict
     finish: float
-    frames: list = field(default_factory=list)   # (t, [(x, y)], [peg ids hit this frame])
-    events: list = field(default_factory=list)
+    frames: list = field(default_factory=list)   # (t, [(x, y)], [(peg id, ball index) hit this frame])
+    events: list = field(default_factory=list)   # (t, kind, pan)
     winner: int = None
     win_t: float = None
 
@@ -105,10 +105,10 @@ def simulate(p, seed, colors_n) -> Sim:
     t, last_note = 0.0, -1.0
     floor = finish + 260
 
-    def note():
+    def note(x):
         nonlocal last_note
         if t - last_note >= NOTE_GAP:
-            sim.events.append((t, "bounce"))
+            sim.events.append((t, "bounce", (x - C.W / 2) / (C.W / 2)))
             last_note = t
 
     for _ in range(int(p["max_seconds"] * C.FPS)):
@@ -126,12 +126,12 @@ def simulate(p, seed, colors_n) -> Sim:
                     b[0] = LEFT + BALL_R
                     if b[2] < 0:
                         b[2] = -b[2] * e
-                        note()
+                        note(b[0])
                 elif b[0] > RIGHT - BALL_R:
                     b[0] = RIGHT - BALL_R
                     if b[2] > 0:
                         b[2] = -b[2] * e
-                        note()
+                        note(b[0])
                 if b[1] > floor - BALL_R:
                     b[1] = floor - BALL_R
                     b[3] = -abs(b[3]) * 0.3
@@ -154,8 +154,8 @@ def simulate(p, seed, colors_n) -> Sim:
                             b[2] -= (1 + e) * vn * nx
                             b[3] -= (1 + e) * vn * ny
                             b[2] += rng.uniform(-18, 18)
-                            hits.append(pid)
-                            note()
+                            hits.append((pid, bi))
+                            note(b[0])
             # ball-ball elastic
             if t >= RELEASE_T:
                 for i in range(n):
@@ -178,13 +178,13 @@ def simulate(p, seed, colors_n) -> Sim:
                             a[3] -= rel * ny
                             b[2] += rel * nx
                             b[3] += rel * ny
-                            note()
+                            note(a[0])
             for bi, b in enumerate(balls):
                 if not finished[bi] and b[1] >= finish:
                     finished[bi] = True
                     if sim.winner is None:
                         sim.winner, sim.win_t = bi, t
-                        sim.events.append((t, "win"))
+                        sim.events.append((t, "win", (b[0] - C.W / 2) / (C.W / 2)))
         # stuck detection, once per frame
         if t >= RELEASE_T:
             for bi, b in enumerate(balls):
@@ -203,19 +203,27 @@ def simulate(p, seed, colors_n) -> Sim:
             break
     if sim.winner is None:
         sim.winner = max(range(n), key=lambda i: balls[i][1])
-        sim.events.append((t, "end"))
+        sim.events.append((t, "end", 0.0))
     return sim
 
 
 def best_sim(p, seed, n) -> Sim:
     hi = p["max_seconds"] - TAIL
-    first = None
-    for k in range(30):
-        sim = simulate(p, seed * 1000 + k, n)
-        first = first or sim
-        if sim.win_t is not None and MIN_WIN <= sim.win_t <= hi:
-            return sim
-    return first
+    q = dict(p)
+    best = None
+    for attempt in range(4):
+        fast = 0
+        for k in range(20):
+            sim = simulate(q, seed * 1000 + attempt * 100 + k, n)
+            if sim.win_t is not None and MIN_WIN <= sim.win_t <= hi:
+                return sim
+            if sim.win_t is not None and sim.win_t < MIN_WIN:
+                fast += 1
+            if sim.win_t is None or best is None or (best.win_t is not None and sim.win_t > best.win_t):
+                best = sim  # prefer a timeout ("closest to the finish") over a too-short race
+        # all too fast -> lower gravity; too slow -> raise it
+        q["gravity"] = q["gravity"] * (0.8 if fast >= 10 else 1.2)
+    return best
 
 
 def _draw_finish(surf, y):
@@ -235,64 +243,103 @@ def render(config: dict, writer) -> dict:
     seed = int(config.get("seed", 0))
     sim = best_sim(p, seed, n)
     hook = config.get("hook") or "Which color wins? Comment before it ends!"
-    surf = pygame.Surface((C.W, C.H))
-    peg_glow = [-9.0] * len(sim.pegs)
-    peg_col = (70, 72, 96)
+    bg = C.background(colors[0], seed % 7)
+    glow = C.Glow(bg, 0.9)
+    header = bg.subsurface((0, 0, C.W, PLAY_TOP)).copy()
+    fade = pygame.Surface((C.W, 50), pygame.SRCALPHA)
+    for i in range(50):
+        pygame.draw.line(fade, (*bg.get_at((C.W // 2, PLAY_TOP))[:3], int(255 * (1 - i / 50))), (0, i), (C.W, i))
+    scene = pygame.Surface((C.W, C.H))
+    frame = pygame.Surface((C.W, C.H))
+    peg_hit = [(-9.0, 0)] * len(sim.pegs)
+    peg_col = (62, 66, 96)
     cam_max = sim.finish - (FINISH_SCREEN - PLAY_TOP)
     cam = 0.0
+    bursts = []          # (t0, parts in world coords)
+    chip_x = [C.W / 2] * n
+    lead_prev, lead_t = None, -9.0
+    finale = C.make_burst(seed * 17, C.W / 2, sim.finish, colors + [C.WHITE], n=110, speed=(350, 1100),
+                          life=1.6, size=(5, 10))
 
     for fi, (t, balls, hits) in enumerate(sim.frames):
-        for pid in hits:
-            peg_glow[pid] = t
-        lead = max(range(n), key=lambda i: balls[i][1])
+        for hi, (pid, bi) in enumerate(hits):
+            peg_hit[pid] = (t, bi)
+            px, py, _ = sim.pegs[pid]
+            bursts.append((t, C.make_burst(seed * 7 + fi * 13 + hi, px, py, [colors[bi], C.WHITE], n=7,
+                                           speed=(80, 260), life=0.3, size=(2, 4))))
+        bursts = [b for b in bursts if t - b[0] < 0.4]
+        order = sorted(range(n), key=lambda i: -balls[i][1])
+        lead = order[0]
+        if lead != lead_prev:
+            lead_prev, lead_t = lead, t
         target = min(cam_max, max(0.0, balls[lead][1] - 520))
         cam += (target - cam) * 0.1
-        ys = lambda wy: wy - cam + PLAY_TOP
+        dy = PLAY_TOP - cam
+        ys = lambda wy: wy + dy
 
-        surf.fill(C.BG)
-        pygame.draw.rect(surf, (32, 34, 48), (LEFT - 8, PLAY_TOP, 8, C.H))
-        pygame.draw.rect(surf, (32, 34, 48), (RIGHT, PLAY_TOP, 8, C.H))
-        for (px, py, pr), glow_t in zip(sim.pegs, peg_glow):
+        scene.blit(bg, (0, 0))
+        pygame.draw.rect(scene, (40, 44, 70), (LEFT - 8, PLAY_TOP, 8, C.H))
+        pygame.draw.rect(scene, (40, 44, 70), (RIGHT, PLAY_TOP, 8, C.H))
+        for (px, py, pr), (ht, hb) in zip(sim.pegs, peg_hit):
             sy = ys(py)
             if sy < PLAY_TOP - 30 or sy > C.H + 30:
                 continue
-            k = max(0.0, 1 - (t - glow_t) / 0.35)
-            col = tuple(int(a + (b - a) * k) for a, b in zip(peg_col, C.WHITE))
-            C.aa_circle(surf, col, px, sy, pr + 3 * k)
+            k = max(0.0, 1 - (t - ht) / 0.4)
+            C.aa_circle(scene, C.mix(peg_col, C.lighten(colors[hb], 0.35), k), px, sy, pr + 4 * k)
         if ys(sim.finish) < C.H + 40:
-            _draw_finish(surf, ys(sim.finish))
-        for back in range(6, 0, -1):
-            j = fi - back * 2
-            if j < 0:
-                continue
-            for i, (x, y) in enumerate(sim.frames[j][1]):
-                C.aa_circle(surf, (*colors[i], int(90 * (1 - back / 7))), x, ys(y), BALL_R * (1 - back / 10))
+            _draw_finish(scene, ys(sim.finish))
+        for t0, parts in bursts:
+            C.draw_burst(scene, parts, t - t0, dy=dy)
+        if sim.win_t is not None and t >= sim.win_t:
+            C.draw_burst(scene, finale, t - sim.win_t, gravity=1100, dy=dy)
+        for i in range(n):
+            pts = [(f[1][i][0], ys(f[1][i][1])) for f in sim.frames[max(0, fi - 8):fi + 1]]
+            C.draw_trail(scene, pts, colors[i], BALL_R * 0.85, alpha0=150)
         for i, (x, y) in enumerate(balls):
-            C.aa_circle(surf, colors[i], x, ys(y), BALL_R)
-            C.aa_circle(surf, C.lighten(colors[i], 0.6), x - 7, ys(y) - 7, 6)
+            C.aa_circle(scene, (*colors[i], 80), x, ys(y), BALL_R + 9)
+            C.aa_circle(scene, colors[i], x, ys(y), BALL_R)
+            C.aa_circle(scene, C.lighten(colors[i], 0.7), x - 7, ys(y) - 7, 6)
+        glow.apply(scene)
 
-        # header band + live state
-        pygame.draw.rect(surf, C.BG, (0, 0, C.W, PLAY_TOP))
-        C.draw_hook(surf, hook)
+        shake = 16 * math.exp(-(t - sim.win_t) / 0.1) if sim.win_t is not None and t >= sim.win_t else 0
+        C.shaken(frame, scene, shake, t, seed % 97)
+        if sim.win_t is not None and t >= sim.win_t:
+            C.flash(frame, colors[sim.winner], 90 * math.exp(-(t - sim.win_t) / 0.15))
+
+        # header band + live ranking
+        frame.blit(header, (0, 0))
+        frame.blit(fade, (0, PLAY_TOP))
+        C.draw_hook(frame, hook)
         if t < RELEASE_T:
-            label, col = "READY...", C.WHITE
+            C.pop_text(frame, "READY...", 68, C.WHITE, C.W / 2, 485)
         elif t < RELEASE_T + 0.6:
-            label, col = "GO!", C.WHITE
+            C.pop_text(frame, "GO!", 76, C.WHITE, C.W / 2, 485, math.exp(-(t - RELEASE_T) / 0.15))
         else:
-            label, col = f"LEADER: {names[lead]}", colors[lead]
-        C.blit_center(surf, C.text_surface(label, 68, col), C.W / 2, 480)
+            gap = min(96, 900 / n)
+            for rank, i in enumerate(order):
+                tx = C.W / 2 + (rank - (n - 1) / 2) * gap
+                chip_x[i] += (tx - chip_x[i]) * 0.25
+            for rank in range(n - 1, -1, -1):
+                i = order[rank]
+                pop = math.exp(-(t - lead_t) / 0.15) if rank == 0 else 0
+                r = (34 if rank == 0 else 26) * (1 + 0.3 * pop)
+                C.aa_circle(frame, (*colors[i], 90), chip_x[i], 485, r + 8)
+                C.aa_circle(frame, colors[i], chip_x[i], 485, r)
+                C.blit_center(frame, C.text_surface(str(rank + 1), 40 if rank == 0 else 32, (15, 15, 22), 0),
+                              chip_x[i], 487)
         # progress strip
-        pygame.draw.rect(surf, (40, 42, 58), (1040, 560, 6, 880))
+        pygame.draw.rect(frame, (40, 42, 58), (1040, 560, 6, 880))
         for i, (x, y) in enumerate(balls):
             frac = min(1.0, max(0.0, (y - START_Y) / (sim.finish - START_Y)))
-            C.aa_circle(surf, colors[i], 1043, 560 + 880 * frac, 10)
-        writer.write(surf)
+            C.aa_circle(frame, colors[i], 1043, 560 + 880 * frac, 10)
+        writer.write(frame)
 
-    last = surf.copy()
+    last = frame.copy()
     win_name = names[sim.winner]
     sub = f"in {sim.win_t:.1f}s" if sim.win_t is not None else "closest to the finish"
+    confetti = C.make_confetti(seed, colors)
     nf = int(C.END_CARD_SECONDS * C.FPS)
     for i in range(nf):
-        C.draw_end_card(surf, last, f"{win_name} WINS", sub, colors[sim.winner], i / nf)
-        writer.write(surf)
+        C.draw_end_card(frame, last, f"{win_name} WINS", sub, colors[sim.winner], i / nf, confetti)
+        writer.write(frame)
     return {"events": sim.events, "result": f"{win_name.lower()} wins", "winner": win_name}
