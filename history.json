@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "date": "2026-10-30",
+    "format": "escape_rings",
+    "hook": "Bet it can't escape all 9 rings",
+    "palette": [
+      "#7CFF4D",
+      "#FF9F1C",
+      "#FF4D6D",
+      "#C77DFF",
+      "#4DD2FF",
+      "#FFD24D"
+    ],
+    "melody": "ode_to_joy",
+    "seed": 1839091768,
+    "source": "preset",
+    "result": "escaped in 15.7s",
+    "publish": "not-requested"
+  }
+]
