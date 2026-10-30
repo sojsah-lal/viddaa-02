@@ -38,7 +38,7 @@ Each format picks among derived seeds so the ending lands 13–36 s in, so video
 
 ## GitHub setup
 
-1. Push this folder to a **private** repo.
+1. Push this folder to a GitHub repo (public is fine: secrets stay encrypted). Settings → Pages → `main` / `docs` hosts the Terms and Privacy pages TikTok asks for.
 2. Settings → Secrets and variables → Actions:
 
 | Name | Kind | Needed? |
