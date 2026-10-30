@@ -39,16 +39,33 @@ def save_secret(name: str, value: str) -> bool:
     out = subprocess.run(["gh", "secret", "set", name, "--repo", repo], input=value, text=True,
                          capture_output=True, env={**os.environ, "GH_TOKEN": pat})
     if out.returncode != 0:
-        print(f"[auth] could not save {name}: {out.stderr.strip()[:200]}")
+        print(f"::warning::could not save {name}: {out.stderr.strip()[:200]}")
         return False
     return True
 
 
+def fail(msg: str):
+    """Exit with an ::error:: annotation, which shows on the run page even without log access."""
+    print(f"::error::{msg}" if os.environ.get("GITHUB_ACTIONS") else msg)
+    sys.exit(1)
+
+
 if __name__ == "__main__":
-    tokens = exchange_code(sys.argv[1])
+    # Check everything before spending the one-time code.
+    missing = [k for k in ("TIKTOK_CLIENT_KEY", "TIKTOK_CLIENT_SECRET", "GH_PAT") if not os.environ.get(k)]
+    if missing:
+        fail(f"Missing repo secret(s): {', '.join(missing)}. Add them in Settings > Secrets and variables > "
+             "Actions, then log in again for a new code.")
+    code = (sys.argv[1] if len(sys.argv) > 1 else "").strip()
+    if not code:
+        fail("No code given. Paste the code from the Vidda login page.")
+    try:
+        tokens = exchange_code(code)
+    except RuntimeError as e:
+        fail(f"TikTok rejected the code ({e}). Codes expire after a few minutes and work once: "
+             "log in again on login.html and run this workflow right away.")
     print("[auth] TikTok login OK, scopes:", tokens.get("scope"))
-    if save_secret("TIKTOK_REFRESH_TOKEN", tokens["refresh_token"]):
-        print("[auth] saved TIKTOK_REFRESH_TOKEN. Daily uploads are now on.")
-    else:
-        sys.exit("[auth] could not save the secret: add a GH_PAT secret (fine-grained token, "
-                 "this repo only, permission Secrets: Read and write) and run again with a new code.")
+    if not save_secret("TIKTOK_REFRESH_TOKEN", tokens["refresh_token"]):
+        fail("TikTok login worked but saving TIKTOK_REFRESH_TOKEN failed: GH_PAT needs access to this repo "
+             "with permission Secrets: Read and write.")
+    print("[auth] saved TIKTOK_REFRESH_TOKEN. Daily uploads are now on.")
