@@ -1,0 +1,10 @@
+{
+  "format": "escape_rings",
+  "seed": 777,
+  "hook": "3 balls vs 8 rings. Who escapes first?",
+  "caption": "Guess the time before it ends 👇 #satisfying #simulation",
+  "hashtags": ["satisfying", "simulation", "physics"],
+  "palette": ["#4DD2FF", "#7CFF4D", "#FFD24D", "#FF4D6D", "#C77DFF", "#FF9F1C"],
+  "melody": "mountain_king",
+  "params": {"rings": 8, "gap_deg": 40, "gravity": 0.4, "balls": 3, "spin": 90}
+}

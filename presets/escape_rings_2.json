@@ -1,0 +1,10 @@
+{
+  "format": "escape_rings",
+  "seed": 2024,
+  "hook": "12 rings. One tiny ball. Will it make it?",
+  "caption": "Watch till the end 👀 #satisfying #oddlysatisfying",
+  "hashtags": ["satisfying", "oddlysatisfying", "asmr", "physics"],
+  "palette": ["#C77DFF", "#FF9F1C", "#2EC4B6", "#FF4D6D", "#E0FF4F"],
+  "melody": "fur_elise",
+  "params": {"rings": 12, "gap_deg": 45, "gravity": 0.5, "grow_per_bounce": 0.0, "speed_up_per_bounce": 0.005, "spin": 130}
+}

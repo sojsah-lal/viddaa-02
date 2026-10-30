@@ -1,0 +1,10 @@
+{
+  "format": "color_race",
+  "seed": 31337,
+  "hook": "6 balls race to the bottom. Pick fast!",
+  "caption": "Which one did you pick? 🏁 #plinko #satisfying #race",
+  "hashtags": ["plinko", "satisfying", "race", "marblerace"],
+  "palette": ["#FF4D6D", "#FF9F1C", "#FFD24D", "#7CFF4D", "#4DD2FF", "#C77DFF"],
+  "melody": "frere_jacques",
+  "params": {"balls": 6, "course_length": 5000, "peg_spacing": 90, "gravity": 0.55, "restitution": 0.65}
+}

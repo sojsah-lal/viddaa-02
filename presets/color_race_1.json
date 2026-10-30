@@ -1,0 +1,10 @@
+{
+  "format": "color_race",
+  "seed": 4242,
+  "hook": "Which color wins? Pick one 👇",
+  "caption": "Comment your color before it ends! 🏁 #satisfying #marblerace",
+  "hashtags": ["satisfying", "marblerace", "plinko", "simulation"],
+  "palette": ["#FF4D6D", "#4DD2FF", "#FFD24D", "#7CFF4D", "#C77DFF"],
+  "melody": "canon_in_d",
+  "params": {"balls": 5, "course_length": 4200, "peg_spacing": 96, "gravity": 0.5, "restitution": 0.6}
+}

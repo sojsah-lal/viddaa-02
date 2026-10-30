@@ -1,0 +1,10 @@
+{
+  "format": "escape_rings",
+  "seed": 12345,
+  "hook": "Can the ball escape all 10 rings?",
+  "caption": "It was SO close 😳 #satisfying #physics",
+  "hashtags": ["satisfying", "physics", "simulation"],
+  "palette": ["#FF4D6D", "#4DD2FF", "#FFD24D", "#7CFF4D"],
+  "melody": "ode_to_joy",
+  "params": {"rings": 10, "gap_deg": 50, "gravity": 0.45, "grow_per_bounce": 0.01, "spin": 110}
+}

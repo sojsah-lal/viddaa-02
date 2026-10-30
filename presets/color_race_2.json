@@ -1,0 +1,10 @@
+{
+  "format": "color_race",
+  "seed": 99,
+  "hook": "4 colors. 1 winner. Who's your pick?",
+  "caption": "Drop your color in the comments 👇 #marblerace #satisfying",
+  "hashtags": ["marblerace", "satisfying", "plinko"],
+  "palette": ["#FF9F1C", "#2EC4B6", "#FF4D6D", "#E0FF4F"],
+  "melody": "twinkle",
+  "params": {"balls": 4, "course_length": 3600, "peg_spacing": 105, "gravity": 0.6, "restitution": 0.55}
+}
