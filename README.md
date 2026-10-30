@@ -45,7 +45,8 @@ Each format picks among derived seeds so the ending lands 13–36 s in, so video
 |---|---|---|
 | `TIKTOK_CLIENT_KEY` | secret | for upload |
 | `TIKTOK_CLIENT_SECRET` | secret | for upload |
-| `TIKTOK_REFRESH_TOKEN` | secret | for upload (from `tools/get_tiktok_token.py`) |
+| `TIKTOK_REFRESH_TOKEN` | secret | for upload; the `tiktok-login` workflow sets it for you |
+| `GH_PAT` | secret | lets workflows save `TIKTOK_REFRESH_TOKEN` (fine-grained token, this repo, Secrets: read/write) |
 | `GEMINI_API_KEY` | secret | optional: AI-written hooks/captions |
 | `GEMINI_MODEL` | variable | optional, default `gemini-3.5-flash-lite` |
 | `LLM_PROVIDER` | variable | optional, `claude` to use Claude Code instead of Gemini |
@@ -57,11 +58,19 @@ With no secrets at all it still renders daily and keeps the MP4 as a workflow ar
 
 ## TikTok app (one time)
 
-1. Create an app at developers.tiktok.com, platform **Desktop**, add products **Login Kit** and
-   **Content Posting API** (upload / draft only; Direct Post needs an audit).
-2. Scopes: `user.info.basic`, `video.upload`. Redirect URI: `http://localhost:8080/callback/`.
-3. While the app is unaudited, add your TikTok account as a target/test user in the app's Sandbox.
-4. Run `python tools/get_tiktok_token.py`, log in, and save the printed refresh token as
-   `TIKTOK_REFRESH_TOKEN`. It lasts about a year; the job summary warns you if TikTok rotates it.
+Everything runs in the browser; no local setup needed.
+
+1. Create an app at developers.tiktok.com, platform **Web**, add products **Login Kit** and
+   **Content Posting API** (upload / draft only; Direct Post needs an audit). Switch to **Sandbox**
+   and add your TikTok account as a target user; no review is needed for your own account.
+2. Scopes: `user.info.basic`, `video.upload`. Web redirect URI:
+   `https://sojsah-lal.github.io/viddaa-02/callback.html` (set repo variable `TIKTOK_REDIRECT_URI` if yours differs).
+3. Add secrets `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`, `GH_PAT`.
+4. Open `https://sojsah-lal.github.io/viddaa-02/login.html`, paste the client key, approve in TikTok, copy the code.
+5. Actions → tiktok-login → Run workflow → paste the code. It saves `TIKTOK_REFRESH_TOKEN`.
+
+The refresh token lasts about a year; if TikTok rotates it, the daily job saves the new one via `GH_PAT`.
+Offline alternative: `python tools/get_tiktok_token.py` (Desktop app, `http://localhost:8080/callback/`)
+or `--web` (paste the code into the terminal).
 
 TikTok allows at most 5 pending inbox drafts per 24 h, so post or delete drafts regularly.

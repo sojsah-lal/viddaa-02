@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vidda Login</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 680px; margin: 48px auto; padding: 0 16px; line-height: 1.6; color: #1b1b22; background: #fff; }
+  code { display: block; word-break: break-all; background: #f1f1f5; padding: 12px; border-radius: 6px; margin: 12px 0; }
+  button { font: inherit; padding: 8px 16px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Vidda login</h1>
+<div id="out"><p>No TikTok login code in this address. Start from <a href="login.html">login.html</a>.</p></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const out = document.getElementById("out");
+  let expected = null;
+  try { expected = sessionStorage.getItem("vidda_state"); } catch (e) {}
+  const actions = "https://github.com/sojsah-lal/viddaa-02/actions/workflows/tiktok-login.yml";
+  if (q.get("error")) {
+    out.innerHTML = "<p>TikTok returned an error:</p><code></code>";
+    out.querySelector("code").textContent = q.get("error") + " " + (q.get("error_description") || "");
+  } else if (expected && q.get("state") !== expected) {
+    out.innerHTML = "<p>This login didn't start from this browser (state mismatch). Start again from <a href='login.html'>login.html</a>.</p>";
+  } else if (q.get("code")) {
+    out.innerHTML = "<p>1. Copy this one-time code. It expires in a few minutes.</p>"
+      + "<code id='c'></code><button id='b'>Copy code</button>"
+      + "<p>2. Open <a href='" + actions + "'>the tiktok-login workflow</a>, click <strong>Run workflow</strong>, "
+      + "paste the code and run it. It saves your TikTok token as a GitHub secret.</p>";
+    document.getElementById("c").textContent = q.get("code");
+    document.getElementById("b").onclick = () => navigator.clipboard.writeText(q.get("code"))
+      .then(() => { document.getElementById("b").textContent = "Copied"; });
+  }
+</script>
+</body>
+</html>

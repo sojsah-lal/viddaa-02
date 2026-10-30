@@ -10,7 +10,9 @@ from pathlib import Path
 
 import requests
 
-API = "https://open.tiktokapis.com/v2"
+from publish.tiktok_auth import mask, save_secret
+
+API ="https://open.tiktokapis.com/v2"
 SINGLE_CHUNK_MAX = 64 * 1024 * 1024
 CHUNK = 10 * 1024 * 1024
 SECRETS = ("TIKTOK_CLIENT_KEY", "TIKTOK_CLIENT_SECRET", "TIKTOK_REFRESH_TOKEN")
@@ -26,11 +28,6 @@ def summary(md: str):
     if path:
         with open(path, "a", encoding="utf-8") as f:
             f.write(md + "\n")
-
-
-def mask(value: str):
-    if os.environ.get("GITHUB_ACTIONS") and value:
-        print(f"::add-mask::{value}")
 
 
 def refresh_access_token() -> str:
@@ -49,11 +46,13 @@ def refresh_access_token() -> str:
     new = data.get("refresh_token")
     if new and new != old:
         mask(new)
-        print("WARNING: TikTok returned a NEW refresh token. Update the TIKTOK_REFRESH_TOKEN secret "
-              "(run tools/get_tiktok_token.py again).")
-        summary("## ⚠️ TikTok refresh token changed\nTikTok rotated the refresh token. The old secret may stop "
-                "working. Run `python tools/get_tiktok_token.py` locally and update the "
-                "`TIKTOK_REFRESH_TOKEN` repository secret.\n")
+        if save_secret("TIKTOK_REFRESH_TOKEN", new):
+            print("[publish] TikTok rotated the refresh token; saved the new one to the repo secret")
+        else:
+            print("WARNING: TikTok returned a NEW refresh token and it could not be saved (no GH_PAT).")
+            summary("## ⚠️ TikTok refresh token changed\nTikTok rotated the refresh token and there is no "
+                    "`GH_PAT` secret to save it automatically. Reconnect via the login page "
+                    "(`docs/login.html`) and the `tiktok-login` workflow.\n")
     return token
 
 

@@ -1,0 +1,32 @@
+name: tiktok-login
+
+# One-time (or yearly) TikTok connect: open docs/login.html on GitHub Pages, approve,
+# then run this workflow with the code it shows. Saves TIKTOK_REFRESH_TOKEN for daily-video.
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: "One-time code from the Vidda login page"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Exchange code and save refresh token
+        env:
+          CODE: ${{ inputs.code }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REDIRECT_URI: ${{ vars.TIKTOK_REDIRECT_URI }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: python -m publish.tiktok_auth "$CODE"
