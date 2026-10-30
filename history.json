@@ -16,5 +16,23 @@
     "source": "preset",
     "result": "escaped in 15.7s",
     "publish": "not-requested"
+  },
+  {
+    "date": "2026-10-30",
+    "format": "color_race",
+    "hook": "Comment your color before it ends!",
+    "palette": [
+      "#80ED99",
+      "#E63946",
+      "#3A86FF",
+      "#B5179E",
+      "#FFBE0B",
+      "#2EC4B6"
+    ],
+    "melody": "canon_in_d",
+    "seed": 1874123335,
+    "source": "preset",
+    "result": "green wins",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
