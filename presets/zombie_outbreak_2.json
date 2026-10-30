@@ -1,0 +1,10 @@
+{
+  "format": "zombie_outbreak",
+  "seed": 1313,
+  "hook": "1 zombie vs 150 humans. Bet?",
+  "caption": "Humans or zombie? Comment before it ends 👇 #zombie #simulation",
+  "hashtags": ["zombie", "simulation", "zombieapocalypse"],
+  "palette": ["#FF9F1C", "#4DD2FF", "#FF4D6D", "#E0FF4F"],
+  "melody": "fur_elise",
+  "params": {"humans": 150, "zombies": 1, "zombie_speed": 0.9, "fight_chance": 0.08, "sight": 220}
+}

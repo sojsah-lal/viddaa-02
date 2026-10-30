@@ -30,16 +30,27 @@ HOOKS = {
         "Pick a color. Prove you're lucky.",
         "Your color vs the rest. Pick fast!",
     ],
+    "zombie_outbreak": [
+        "Will anyone survive the outbreak?",
+        "{zombies} zombies vs {humans} humans. Bet?",
+        "Humans or zombies? Pick a side 👇",
+        "How long can {humans} humans last?",
+        "One bite and it spreads. Survivors?",
+        "Can the humans fight back in time?",
+    ],
 }
 CAPTIONS = {
     "escape_rings": ["It was SO close 😳", "Watch till the end 👀", "Did you guess the time? 👇",
                      "The last ring though... 😮‍💨"],
     "color_race": ["Comment your color before it ends! 🏁", "Which one did you pick? 👇",
                    "Rematch tomorrow 🔁", "No way it won that 😳"],
+    "zombie_outbreak": ["Humans or zombies? Comment before it ends 🧟", "That last survivor though 😳",
+                        "Would you have made it? 👇", "It spreads SO fast 😱"],
 }
 TAGS = {
     "escape_rings": ["satisfying", "physics", "simulation", "oddlysatisfying", "asmr"],
     "color_race": ["marblerace", "satisfying", "plinko", "simulation", "race"],
+    "zombie_outbreak": ["zombie", "simulation", "zombieapocalypse", "satisfying", "survival"],
 }
 PALETTES = [
     ["#FF4D6D", "#4DD2FF", "#FFD24D", "#7CFF4D", "#C77DFF", "#FF9F1C"],

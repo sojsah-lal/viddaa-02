@@ -1,0 +1,10 @@
+{
+  "format": "zombie_outbreak",
+  "seed": 666,
+  "hook": "Will anyone survive the outbreak?",
+  "caption": "2 zombies vs 90 humans 🧟 Who wins? #zombie #simulation",
+  "hashtags": ["zombie", "simulation", "satisfying", "zombieapocalypse"],
+  "palette": ["#4DD2FF", "#FF4D6D", "#FFD24D", "#C77DFF"],
+  "melody": "mountain_king",
+  "params": {"humans": 90, "zombies": 2, "zombie_speed": 0.85, "fight_chance": 0.12, "sight": 200}
+}

@@ -1,0 +1,10 @@
+{
+  "format": "zombie_outbreak",
+  "seed": 2077,
+  "hook": "These humans fight back. Enough?",
+  "caption": "They don't go down easy 😤 #zombie #simulation #satisfying",
+  "hashtags": ["zombie", "simulation", "satisfying"],
+  "palette": ["#C77DFF", "#FF4D6D", "#4DD2FF", "#FFD24D"],
+  "melody": "canon_in_d",
+  "params": {"humans": 70, "zombies": 4, "zombie_speed": 0.95, "fight_chance": 0.25, "sight": 180}
+}
