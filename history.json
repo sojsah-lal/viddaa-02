@@ -70,5 +70,23 @@
     "source": "preset",
     "result": "blue wins",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-10-31",
+    "format": "escape_rings",
+    "hook": "13 rings. One ball. Can it escape?",
+    "palette": [
+      "#E63946",
+      "#80ED99",
+      "#2EC4B6",
+      "#FFBE0B",
+      "#B5179E",
+      "#3A86FF"
+    ],
+    "melody": "fur_elise",
+    "seed": 1099215524,
+    "source": "preset",
+    "result": "escaped in 20.2s",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
