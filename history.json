@@ -88,5 +88,29 @@
     "source": "preset",
     "result": "escaped in 20.2s",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-01",
+    "format": "color_race",
+    "hook": "Zendaya, Ronaldo or 2 more? Pick 👇",
+    "palette": [
+      "#FF595E",
+      "#8AC926",
+      "#6A4C93",
+      "#FF924C",
+      "#1982C4",
+      "#FFCA3A"
+    ],
+    "melody": "frere_jacques",
+    "seed": 1627887533,
+    "source": "preset+famous",
+    "result": "ronaldo wins",
+    "publish": "SEND_TO_USER_INBOX",
+    "players": [
+      "Zendaya",
+      "Cristiano Ronaldo",
+      "Neymar",
+      "Donald Trump"
+    ]
   }
 ]
