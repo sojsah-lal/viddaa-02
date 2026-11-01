@@ -29,6 +29,9 @@ START_Y = 80
 PEG_TOP = 260
 BALL_R, PEG_R = 22, 9
 FACE_R = 34            # bigger balls when players have faces
+WALL_PEG_R = 18        # half-pegs built into the side walls
+STUCK_FRAMES = int(1.0 * C.FPS)  # a ball that gains < 12 px in this long gets a nudge
+H_DRAG = 1.2           # per second, horizontal velocity damping
 PLAY_TOP = 540          # screen y where the world view begins
 FINISH_SCREEN = 1440    # finish line never drawn below this screen y
 RELEASE_T = 1.0
@@ -68,21 +71,38 @@ class Sim:
     winner: int = None
     win_t: float = None
     ball_r: float = BALL_R
+    unsticks: int = 0
 
 
 def build_pegs(p, rng):
     sp = p["peg_spacing"]
+    br = p.get("_ball_r", BALL_R)
     row_h = sp * 0.82
     pegs, rows = [], {}
     y, j = PEG_TOP, 0
+    # A peg closer to a wall than a ball's width makes a pocket a ball can wedge into. Skip those and
+    # build a half-peg into the wall instead: its curve always rolls the ball back toward the middle.
+    min_gap = 2 * br + 8
     while y < p["course_length"] - 160:
         x = LEFT + sp / 2 + (sp / 2 if j % 2 else 0)
+        prev = None  # (x, r) of the previous peg in this row
         while x < RIGHT - sp / 3:
             px = x + rng.uniform(-6, 6)
-            r = PEG_R * (2.2 if rng.random() < 0.05 else 1)
-            rows.setdefault(j, []).append(len(pegs))
-            pegs.append((px, y, r))
+            # occasional big pegs, except with face-size balls: big pegs + big balls make diagonal pockets
+            r = PEG_R * (2.2 if br <= BALL_R and rng.random() < 0.05 else 1)
+            # two pegs closer than a ball's width form a cradle the ball can rest in forever
+            if prev and px - r - prev[0] - prev[1] < min_gap:
+                r = PEG_R
+                px = max(px, prev[0] + prev[1] + r + min_gap)
+            if px - r - LEFT >= min_gap and RIGHT - px - r >= min_gap:
+                rows.setdefault(j, []).append(len(pegs))
+                pegs.append((px, y, r))
+                prev = (px, r)
             x += sp
+        if j % 2 == 0:
+            for wx in (LEFT, RIGHT):
+                rows.setdefault(j, []).append(len(pegs))
+                pegs.append((wx, y, WALL_PEG_R))
         y += row_h
         j += 1
     return pegs, rows, row_h
@@ -102,7 +122,7 @@ def simulate(p, seed, colors_n) -> Sim:
     order = list(range(n))
     rng.shuffle(order)
     balls = [balls[i] for i in order]
-    still = [0.0] * n
+    past = [[] for _ in range(n)]  # recent y positions per ball
     finished = [False] * n
     dt = 1 / (C.FPS * SUBSTEPS)
     t, last_note = 0.0, -1.0
@@ -122,6 +142,7 @@ def simulate(p, seed, colors_n) -> Sim:
                 continue
             for bi, b in enumerate(balls):
                 b[3] += g * dt
+                b[2] *= 1 - H_DRAG * dt  # marbles lose sideways speed; stops skating over peg tops
                 b[0] += b[2] * dt
                 b[1] += b[3] * dt
                 # walls
@@ -157,6 +178,9 @@ def simulate(p, seed, colors_n) -> Sim:
                             b[2] -= (1 + e) * vn * nx
                             b[3] -= (1 + e) * vn * ny
                             b[2] += rng.uniform(-18, 18)
+                            if ny < -0.9:  # landed almost dead-center on top: roll off, don't balance
+                                b[2] += (math.copysign(1, nx) if abs(nx) > 0.02 else rng.choice((-1, 1))) \
+                                    * rng.uniform(50, 100)
                             hits.append((pid, bi))
                             note(b[0])
             # ball-ball elastic
@@ -188,19 +212,27 @@ def simulate(p, seed, colors_n) -> Sim:
                     if sim.winner is None:
                         sim.winner, sim.win_t = bi, t
                         sim.events.append((t, "win", (b[0] - C.W / 2) / (C.W / 2)))
-        # stuck detection, once per frame
+        # stuck detection, once per frame: judge by downward progress, not speed (a wedged ball jitters)
         if t >= RELEASE_T:
             for bi, b in enumerate(balls):
                 if finished[bi]:
                     continue
-                if math.hypot(b[2], b[3]) < 20:
-                    still[bi] += 1 / C.FPS
-                    if still[bi] >= 1.0:
-                        b[2] += rng.choice((-1, 1)) * 260
-                        b[3] -= 120
-                        still[bi] = 0
-                else:
-                    still[bi] = 0
+                past[bi].append(b[1])
+                if len(past[bi]) > STUCK_FRAMES:
+                    if b[1] - past[bi].pop(0) < 12:
+                        # sideways push only (an upward kick just makes it bob and stall again):
+                        # off the side of the peg it sits on, or toward the middle when near a wall
+                        jr = int((b[1] - PEG_TOP) / row_h)
+                        near = [sim.pegs[q] for j in (jr, jr + 1) for q in rows.get(j, ()) if sim.pegs[q][1] > b[1]]
+                        below = min(near, key=lambda q: abs(q[0] - b[0]) + abs(q[1] - b[1]), default=None)
+                        if below and LEFT + 3 * br < b[0] < RIGHT - 3 * br:
+                            side = 1 if b[0] >= below[0] else -1
+                        else:
+                            side = 1 if b[0] < C.W / 2 else -1
+                        b[2] = side * rng.uniform(110, 170)
+                        b[3] = max(b[3], 0.0)
+                        past[bi].clear()
+                        sim.unsticks += 1
         sim.frames.append((t, [(b[0], b[1]) for b in balls], hits))
         if sim.win_t is not None and t >= sim.win_t + TAIL:
             break
