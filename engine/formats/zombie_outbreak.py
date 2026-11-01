@@ -7,6 +7,7 @@ every zombie is destroyed ("HUMANS WIN"), or time runs out ("N SURVIVORS").
 """
 import colorsys
 import math
+import random
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -215,6 +216,53 @@ def best_sim(p: dict, seed: int) -> Sim:
     return fallback or simulate(q, seed * 1000)
 
 
+OUTCOMES = ("lost", "won", "timeout")
+
+
+def outcome_sim(p: dict, seed: int) -> Sim:
+    """A seeded die picks the ending (1/3 each: humanity lost, humans win, survivors at time's up), then the
+    balance is tuned and seeds searched until a real simulation ends that way, no earlier than MIN_END."""
+    target = OUTCOMES[random.Random(seed * 5 + 1).randrange(3)]
+    q = dict(p)
+    if target == "lost":
+        q["fight_chance"] = min(q["fight_chance"], 0.08)
+    elif target == "won":
+        q["fight_chance"] = max(q["fight_chance"], 0.38)
+        q["zombies"] = max(int(q["zombies"]), 2)
+    else:
+        q["zombie_speed"] = min(q["zombie_speed"], 0.72)
+        q["fight_chance"] = min(q["fight_chance"], 0.15)
+    for attempt in range(7):
+        got = {"lost": 0, "won": 0, "timeout": 0, "early": 0}
+        for k in range(5):
+            sim = simulate(q, seed * 1000 + attempt * 100 + k)
+            if sim.outcome == target and sim.end_t >= MIN_END:
+                return sim
+            got["early" if sim.outcome == target else sim.outcome] += 1
+        if target == "won":
+            if got["early"]:          # wiped the zombies out too fast: more zombies, a bit less fighting
+                q["zombies"] = min(6, int(q["zombies"]) + 1)
+                q["fight_chance"] *= 0.85
+            else:                     # humans keep losing or stalling: fight harder
+                q["fight_chance"] = min(0.75, q["fight_chance"] + 0.12)
+        elif target == "timeout":
+            if got["lost"] or got["early"]:
+                q["zombie_speed"] *= 0.88
+                q["sight"] *= 0.88
+            if got["won"]:
+                q["fight_chance"] *= 0.5
+        else:
+            if got["timeout"]:
+                q["zombie_speed"] = min(1.3, q["zombie_speed"] * 1.12)
+                q["sight"] = min(320, q["sight"] * 1.1)
+            if got["early"]:
+                q["zombie_speed"] *= 0.9
+            if got["won"]:
+                q["fight_chance"] *= 0.5
+    print(f"[zombie] could not stage a '{target}' ending; using any outcome")
+    return best_sim(p, seed)
+
+
 def _human_color(pal):
     """First palette color that isn't green, so humans never look like zombies."""
     for c in pal:
@@ -248,7 +296,7 @@ def render(config: dict, writer) -> dict:
     p = {**DEFAULTS, **(config.get("params") or {})}
     pal = C.palette_rgb(config)
     seed = int(config.get("seed", 0))
-    sim = best_sim(p, seed)
+    sim = outcome_sim(p, seed)
     hook = config.get("hook") or "Will anyone survive the outbreak?"
     hcol = _human_color(pal)
     bg = C.background(hcol, seed % 7)
