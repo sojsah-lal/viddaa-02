@@ -148,5 +148,23 @@
     "source": "preset",
     "result": "missed the 15s deadline, 2 rings left",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-01",
+    "format": "zombie_outbreak",
+    "hook": "Humans or zombies? Pick a side 👇",
+    "palette": [
+      "#6A4C93",
+      "#FFCA3A",
+      "#1982C4",
+      "#FF595E",
+      "#8AC926",
+      "#FF924C"
+    ],
+    "melody": "mountain_king",
+    "seed": 1234081156,
+    "source": "preset",
+    "result": "humanity lost in 31.2s",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
