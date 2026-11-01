@@ -100,7 +100,8 @@ def main():
 
     history.append({"date": day, "format": cfg["format"], "hook": cfg["hook"], "palette": cfg["palette"],
                     "melody": cfg["melody"], "seed": cfg["seed"], "source": source.split(" ")[0],
-                    "result": result["result"], "publish": status})
+                    "result": result["result"], "publish": status,
+                    **({"players": [p["name"] for p in cfg["players"]]} if cfg.get("players") else {})})
     HISTORY.write_text(json.dumps(history[-KEEP_HISTORY:], indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"[run] publish={status}")
     sys.exit(exit_code)

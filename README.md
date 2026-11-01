@@ -33,6 +33,9 @@ QA any file: `python -m qa.check output/test.mp4`.
 
 - **escape_rings**: "Can the ball escape all N rings?" Rotating rings with gaps; each escape shatters a ring.
 - **color_race**: "Which color wins?" A Plinko race down a scrolling peg board, first across the line wins.
+  On race days the balls become people trending on Wikipedia (living adults: athletes, musicians, actors,
+  creators, politicians) using free-licensed Wikimedia Commons photos, credited in the caption.
+  Set the repo variable `FAMOUS_FACES=off` to use plain colors.
 - **zombie_outbreak**: "Will anyone survive?" Zombies chase fleeing humans across a city block; ends in HUMANITY LOST, HUMANS WIN or N SURVIVORS.
 
 Each format picks among derived seeds so the ending lands 13–36 s in, so videos run 15–45 s.

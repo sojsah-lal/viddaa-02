@@ -9,7 +9,26 @@ from engine.melodies import MELODIES
 
 ROOT = Path(__file__).resolve().parent.parent
 PRESETS = ROOT / "presets"
-TOP_KEYS = ("format", "seed", "hook", "caption", "hashtags", "palette", "melody", "params")
+TOP_KEYS = ("format", "seed", "hook", "caption", "hashtags", "palette", "melody", "params", "players")
+FACES_DIR = (ROOT / "output" / "faces").resolve()
+
+
+def clean_players(players, fmt: str) -> list:
+    """Keep players only for color_race, 4-6 entries, each with a downloaded face under output/faces.
+    Anything off drops the faces (the race just uses colored balls) rather than failing the day."""
+    if fmt != "color_race" or not isinstance(players, list) or not 4 <= len(players) <= 6:
+        return []
+    out = []
+    for pl in players:
+        if not isinstance(pl, dict):
+            return []
+        img = (ROOT / str(pl.get("image", ""))).resolve()
+        name, short, credit = (str(pl.get(k, "")).strip() for k in ("name", "short", "credit"))
+        if not (img.is_file() and img.parent == FACES_DIR and name and short and credit):
+            return []
+        out.append({"name": name[:60], "short": short[:14], "image": img.relative_to(ROOT).as_posix(),
+                    "credit": credit[:200]})
+    return out
 HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
@@ -70,6 +89,10 @@ def sanitize(raw: dict) -> dict:
         raise Invalid(f"unknown melody {cfg.get('melody')!r}")
 
     cfg["params"] = {**FORMATS[fmt].DEFAULTS, **clamp_params(fmt, cfg.get("params"))}
+    players = clean_players(cfg.pop("players", None), fmt)
+    if players:
+        cfg["players"] = players
+        cfg["params"]["balls"] = len(players)
     return cfg
 
 

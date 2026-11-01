@@ -170,6 +170,40 @@ def call_claude(prompt: str) -> dict:
     return extract_json(json.loads(out.stdout)["result"])
 
 
+def famous_hook(shorts: list) -> str:
+    for hook in (" vs ".join(shorts) + ". Pick one 👇",
+                 f"{shorts[0]}, {shorts[1]} or {len(shorts) - 2} more? Pick 👇",
+                 "Famous faces race. Pick a winner 👇"):
+        if len(hook) <= 48:
+            return hook
+    return "Famous faces race. Pick a winner 👇"
+
+
+def add_famous(raw: dict, rng: random.Random, history: list) -> bool:
+    """On race days, swap colored balls for people trending on Wikipedia (free-licensed photos only).
+    Leaves raw untouched (plain colors) if fewer than 4 qualify. Set FAMOUS_FACES=off to disable."""
+    if raw.get("format") != "color_race" or (os.environ.get("FAMOUS_FACES") or "on").lower() == "off":
+        return False
+    from planner import celebs
+    recent_people = {name for h in history[-3:] for name in h.get("players") or []}
+    pool = celebs.fetch(n_max=10, exclude=recent_people)
+    if len(pool) < 4:
+        print(f"[plan] only {len(pool)} trending people with free photos; using colored balls")
+        return False
+    n = min(len(pool), max(4, int((raw.get("params") or {}).get("balls", 5))))
+    players = pool[:n]
+    rng.shuffle(players)  # starting slot shouldn't follow the trending rank
+    shorts = [p["short"] for p in players]
+    tags = [re.sub(r"[^a-z0-9]", "", p["name"].lower()) for p in players[:2]]
+    raw["players"] = players
+    raw.setdefault("params", {})["balls"] = n
+    raw["hook"] = famous_hook(shorts)
+    raw["hashtags"] = [t for t in tags if t] + ["race", "satisfying", "fyp"]
+    raw["caption"] = ("Who did you pick? Comment before it ends 👇\n\n"
+                      "Photos via Wikimedia Commons: " + "; ".join(p["credit"] for p in players))
+    return True
+
+
 def plan(history: list, rng: random.Random, forced_format: str = None):
     """Returns (raw_config, source)."""
     fmt = choose_format(history, rng, forced_format)
@@ -180,10 +214,12 @@ def plan(history: list, rng: random.Random, forced_format: str = None):
         elif os.environ.get("GEMINI_API_KEY"):
             raw, source = call_gemini(build_prompt(fmt, history)), "gemini"
         else:
-            return preset_variation(fmt, rng, history), "preset"
+            raw, source = preset_variation(fmt, rng, history), "preset"
     except Exception as e:
         print(f"[plan] LLM step failed ({e}); using preset variation")
-        return preset_variation(fmt, rng, history), "preset"
+        raw, source = preset_variation(fmt, rng, history), "preset"
     raw["format"] = fmt
     raw["seed"] = rng.randrange(1, 2**31)
+    if add_famous(raw, rng, history):
+        source += "+famous"
     return raw, source

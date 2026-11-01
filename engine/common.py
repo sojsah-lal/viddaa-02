@@ -15,6 +15,7 @@ from pathlib import Path
 import pygame
 import pygame.gfxdraw
 
+ROOT = Path(__file__).resolve().parent.parent
 W, H = 1080, 1920
 FPS = 30
 HOOK_TOP, HOOK_BOTTOM = 180, 420   # hook text must stay inside this band
@@ -215,6 +216,23 @@ def draw_trail(dst, pts, color, r0, alpha0=170, step=6.0):
         aa_circle(dst, (*color, int(alpha0 * f * f)), x, y, max(1.0, r0 * (0.25 + 0.75 * f)))
 
 
+@lru_cache(maxsize=64)
+def face_disc(path: Path, r: int) -> pygame.Surface:
+    """Portrait cropped to a circle of radius r (square crop biased to the top, where faces usually are)."""
+    img = pygame.image.load(str(path))
+    w, h = img.get_size()
+    side = min(w, h)
+    x0, y0 = (w - side) // 2, int((h - side) * 0.15)
+    img = pygame.transform.smoothscale(img.subsurface((x0, y0, side, side)), (2 * r, 2 * r))
+    out = pygame.Surface((2 * r, 2 * r), pygame.SRCALPHA)
+    out.blit(img, (0, 0))
+    mask = pygame.Surface((2 * r, 2 * r), pygame.SRCALPHA)
+    pygame.gfxdraw.filled_circle(mask, r, r, r - 1, (255, 255, 255, 255))
+    pygame.gfxdraw.aacircle(mask, r, r, r - 1, (255, 255, 255, 255))
+    out.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    return out
+
+
 def make_burst(seed, x, y, colors, n=24, speed=(150, 500), life=0.45, size=(3, 6)):
     """Seeded spark burst: list of (x, y, vx, vy, size, life, color)."""
     import random
@@ -288,8 +306,9 @@ def pop_text(dst, text, base, color, cx, cy, pop=0.0, alpha=255, stroke=5):
 
 # ---------- end card ----------
 
-def draw_end_card(dst, background, title, subtitle, accent, progress, confetti=None):
-    """background: frozen last scene; progress 0..1 drives fade/scale-in; confetti from make_confetti()."""
+def draw_end_card(dst, background, title, subtitle, accent, progress, confetti=None, hero=None):
+    """background: frozen last scene; progress 0..1 drives fade/scale-in; confetti from make_confetti();
+    hero: optional round portrait shown above the title."""
     dst.blit(background, (0, 0))
     k = min(1.0, progress / 0.25)
     shade = pygame.Surface((W, H), pygame.SRCALPHA)
@@ -301,6 +320,11 @@ def draw_end_card(dst, background, title, subtitle, accent, progress, confetti=N
     # back-out ease: overshoots slightly, then settles
     ease = 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2
     title_size = max(40, int(150 * (0.55 + 0.45 * ease)) // 4 * 4)
+    if hero is not None:
+        s = max(8, int(hero.get_width() * min(1.0, 0.4 + 0.6 * ease)))
+        aa_circle(dst, (*accent, 120), W / 2, 600, s / 2 + 14)
+        aa_circle(dst, accent, W / 2, 600, s / 2 + 6)
+        blit_center(dst, pygame.transform.smoothscale(hero, (s, s)), W / 2, 600)
     draw_lines(dst, wrap(clean_text(title).upper(), title_size, 980), title_size, accent, W / 2, 820, stroke=7)
     draw_lines(dst, wrap(clean_text(subtitle), 84, 960), 84, WHITE, W / 2, 1010, stroke=5)
     if progress > 0.3:
