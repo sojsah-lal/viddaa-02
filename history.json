@@ -166,5 +166,23 @@
     "source": "preset",
     "result": "humanity lost in 31.2s",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-01",
+    "format": "escape_rings",
+    "hook": "10 rings. 25 seconds. Can it escape?",
+    "palette": [
+      "#1982C4",
+      "#6A4C93",
+      "#FF924C",
+      "#FF595E",
+      "#FFCA3A",
+      "#8AC926"
+    ],
+    "melody": "frere_jacques",
+    "seed": 41415850,
+    "source": "preset",
+    "result": "missed the 25s deadline, 2 rings left",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
