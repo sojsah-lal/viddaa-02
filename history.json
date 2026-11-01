@@ -112,5 +112,23 @@
       "Neymar",
       "Donald Trump"
     ]
+  },
+  {
+    "date": "2026-11-01",
+    "format": "zombie_outbreak",
+    "hook": "Can the humans fight back in time?",
+    "palette": [
+      "#FF6B35",
+      "#00BBF9",
+      "#00F5D4",
+      "#FEE440",
+      "#F15BB5",
+      "#9B5DE5"
+    ],
+    "melody": "canon_in_d",
+    "seed": 102389293,
+    "source": "preset",
+    "result": "humanity lost in 21.9s",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
