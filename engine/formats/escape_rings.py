@@ -1,8 +1,10 @@
 """escape_rings: "Can the ball escape all N rings?" — rotating concentric rings with gaps.
 
 Balls bounce inside the innermost ring; when any ball slips through its gap that ring shatters.
-With balls > 1 all balls share the rings, so there is no single winning ball. Ends with
-"ESCAPED in X.Xs" or, if time runs out, "TIME'S UP! N rings left".
+With balls > 1 all balls share the rings, so there is no single winning ball.
+Each video is a deadline challenge: "Will it escape in {X} seconds?" where the engine picks X (a multiple
+of 5) and fills it into the hook, so hooks for this format must contain the literal placeholder {X}.
+Ends with "ESCAPED in X.Xs" or "TIME'S UP! N rings left".
 """
 import math
 import random
@@ -164,6 +166,34 @@ def best_sim(p: dict, seed: int) -> Sim:
     return timeout or slowest
 
 
+def deadline_sim(p: dict, seed: int):
+    """Coin flip (seeded) picks win or loss; then the deadline X, a multiple of 5, is set from the real
+    escape time: the next multiple above it for a win, the one below it for a loss.
+    Returns (sim, win, X)."""
+    win = random.Random(seed * 7 + 3).random() < 0.5
+    q = {**p, "max_seconds": 46.0}
+    fallback = None
+    for attempt in range(5):
+        fast = 0
+        for k in range(30):
+            sim = simulate(q, seed * 1000 + attempt * 100 + k)
+            e = sim.escape_t
+            if win and e is not None and MIN_ESCAPE - 1 <= e < 35:
+                return sim, True, (int(e // 5) + 1) * 5
+            if not win and e is not None and 15 < e <= 45:
+                return sim, False, min(40, math.ceil(e / 5) * 5 - 5)
+            if not win and e is None:
+                fallback = fallback or sim
+            if e is not None and e < (MIN_ESCAPE if win else 15):
+                fast += 1
+        q["gap_deg"] = max(18.0, q["gap_deg"] * 0.8) if fast >= 15 else min(80.0, q["gap_deg"] * 1.2)
+    if fallback:
+        return fallback, False, 40
+    sim = best_sim(p, seed)
+    e = sim.escape_t
+    return (sim, True, (int(e // 5) + 1) * 5) if e is not None else (sim, False, 35)
+
+
 def _shards(seed, i, ring, color):
     """The broken ring splits into spinning arc fragments that fly out and fall."""
     rng = random.Random(seed * 7919 + i)
@@ -187,9 +217,14 @@ def render(config: dict, writer) -> dict:
     p = {**DEFAULTS, **(config.get("params") or {})}
     pal = C.palette_rgb(config)
     seed = int(config.get("seed", 0))
-    sim = best_sim(p, seed)
+    sim, win, deadline = deadline_sim(p, seed)
     k = len(sim.rings)
-    hook = config.get("hook") or f"Can the ball escape all {k} rings?"
+    hook = config.get("hook") or ""
+    hook = hook.replace("{X}", str(deadline)).replace("{x}", str(deadline)) if "{" in hook         else f"Will it escape in {deadline} seconds?"
+    frames, events = sim.frames, sim.events
+    if not win:  # cut at the deadline: the escape (if any) happens after the clock runs out
+        frames = [f for f in sim.frames if f[0] <= deadline + 1e-6]
+        events = [e for e in sim.events if e[0] <= deadline and e[1] != "win"] + [(deadline, "end", 0.0)]
     accent = pal[0]
     bg = C.background(accent, seed % 7)
     glow = C.Glow(bg)
@@ -211,7 +246,7 @@ def render(config: dict, writer) -> dict:
 
     last_hit = [-9.0] * k
     hit_ptr = 0
-    for fi, (t, inner, balls) in enumerate(sim.frames):
+    for fi, (t, inner, balls) in enumerate(frames):
         while hit_ptr < len(sim.hits) and sim.hits[hit_ptr][0] <= t:
             last_hit[sim.hits[hit_ptr][1]] = sim.hits[hit_ptr][0]
             hit_ptr += 1
@@ -252,26 +287,34 @@ def render(config: dict, writer) -> dict:
         glow.apply(scene)
 
         C.shaken(frame, scene, _shake(sim, t), t, seed % 97)
-        if sim.escape_t is not None and t >= sim.escape_t:
+        if win and t >= sim.escape_t:
             C.flash(frame, C.WHITE, 110 * math.exp(-(t - sim.escape_t) / 0.08))
         elif broke:
             C.flash(frame, col(inner - 1), 45 * math.exp(-since_break / 0.08))
         C.draw_hook(frame, hook)
         status = f"{left} RING{'S' if left != 1 else ''} LEFT" if left else "ESCAPED!"
-        C.pop_text(frame, f"{status}   {t:4.1f}s", 64, C.lighten(accent, 0.25), C.W / 2, 485, pop * 0.4)
+        rem = max(0.0, deadline - (min(t, sim.escape_t) if win and t >= sim.escape_t else t))
+        urgent = rem <= 5 and left
+        tick = math.exp(-((5 - rem) % 1) / 0.12) if urgent else 0.0  # pops once a second in the last 5 s
+        C.pop_text(frame, status, 56, C.lighten(accent, 0.25), 330, 485, pop * 0.4)
+        C.pop_text(frame, f"{rem:4.1f}s", 72, (255, 80, 80) if urgent else C.WHITE, 790, 485, tick * 0.5)
         writer.write(frame)
 
     last = frame.copy()
     confetti = None
-    if sim.escape_t is not None:
-        title, sub, result = "ESCAPED!", f"in {sim.escape_t:.1f}s", f"escaped in {sim.escape_t:.1f}s"
+    if win:
+        title, sub = "ESCAPED!", f"in {sim.escape_t:.1f}s, beat the {deadline}s clock"
+        result = f"escaped in {sim.escape_t:.1f}s (deadline {deadline}s)"
         confetti = C.make_confetti(seed, pal)
+        end_col = accent
     else:
-        left = k - sim.frames[-1][1]
+        left = k - frames[-1][1]
         noun = "ring" if left == 1 else "rings"
-        title, sub, result = "TIME'S UP!", f"{left} {noun} left", f"time's up, {left} {noun} left"
+        title, sub = "TIME'S UP!", f"{left} {noun} left at {deadline}s"
+        result = f"missed the {deadline}s deadline, {left} {noun} left"
+        end_col = (255, 70, 70)
     n = int(C.END_CARD_SECONDS * C.FPS)
     for i in range(n):
-        C.draw_end_card(frame, last, title, sub, accent, i / n, confetti)
+        C.draw_end_card(frame, last, title, sub, end_col, i / n, confetti)
         writer.write(frame)
-    return {"events": sim.events, "result": result}
+    return {"events": events, "result": result, "deadline": deadline, "win": win}

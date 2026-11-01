@@ -8,6 +8,7 @@ Pipeline (all free, no keys):
 Any network or data problem returns fewer (or zero) people; callers fall back to plain colored balls.
 """
 import html
+import random
 import re
 import time
 from datetime import date, datetime, timedelta, timezone
@@ -34,7 +35,17 @@ OCCUPATIONS = {
     "Q82955", "Q30461", "Q48352", "Q83307", "Q372436",
 }
 FREE_LICENSE = re.compile(r"^(cc0|public domain|pd|cc[ -]by(-sa)?[ -]?\d)", re.I)
-MIN_FAME = 40  # Wikipedia language editions with an article on the person
+MAX_TRENDING = 2  # at most this many "in the news" people per race; the rest are SUPERSTARS
+STAR_FAME = 180  # trending people must have articles in this many Wikipedia languages (household names)
+# Always-recognizable fallback stars (English Wikipedia titles); same filters and license checks apply.
+SUPERSTARS = [
+    "Lionel_Messi", "Cristiano_Ronaldo", "Kylian_Mbappé", "Erling_Haaland", "Neymar", "Vinícius_Júnior",
+    "LeBron_James", "Stephen_Curry", "Lewis_Hamilton", "Max_Verstappen", "Novak_Djokovic", "Carlos_Alcaraz",
+    "Taylor_Swift", "Beyoncé", "Rihanna", "Ariana_Grande", "Billie_Eilish", "Bad_Bunny", "The_Weeknd",
+    "Ed_Sheeran", "Lady_Gaga", "Justin_Bieber", "Selena_Gomez", "Dua_Lipa", "Lisa_(rapper)",
+    "Jennie_(singer)", "Rosé_(singer)", "Jisoo", "Jungkook", "Jimin", "Dwayne_Johnson", "Tom_Cruise",
+    "Zendaya", "Keanu_Reeves", "Tom_Holland", "MrBeast", "IShowSpeed", "Kai_Cenat",
+]
 SKIP_TITLE = re.compile(r"^(Main_Page|Special:|Wikipedia:|File:|Portal:|Help:|Template:|Category:|Talk:)")
 
 
@@ -133,22 +144,26 @@ def licensed_thumb(file: str, width=256):
     return info.get("thumburl") or info.get("url"), artist[:60], lic
 
 
-def fetch(n_max=12, exclude=(), day: date = None) -> list:
-    """Up to n_max trending people as dicts: name, short, image (repo-relative path), credit."""
+def fetch(n_max=12, exclude=(), day: date = None, seed: int = 0) -> list:
+    """Up to n_max famous people as dicts: name, short, image (repo-relative path), credit.
+    Household-name people trending yesterday come first, then a seeded shuffle of SUPERSTARS."""
     today = datetime.now(timezone.utc).date()
     day = day or today - timedelta(days=1)
+    order, cands = [], {}
     try:
         titles = trending_titles(day)
         ids = wikidata_ids(titles)
-        ranked = [ids[t] for t in titles if t in ids]
-        cands = {p["qid"]: p for p in people(list(dict.fromkeys(ranked)), today)}
+        trending = list(dict.fromkeys(ids[t] for t in titles if t in ids))
+        stars_ids = wikidata_ids(SUPERSTARS)
+        stars = list(dict.fromkeys(stars_ids.values()))
+        random.Random(seed).shuffle(stars)
+        cands = {p["qid"]: p for p in people(list(dict.fromkeys(trending + stars)), today)}
+        hot = [q for q in trending if q in cands and cands[q]["fame"] >= STAR_FAME][:MAX_TRENDING]
+        order = hot + [q for q in stars if q in cands and q not in hot]
     except (requests.RequestException, KeyError, ValueError, IndexError) as e:
-        print(f"[celebs] trending lookup failed: {e}")
+        print(f"[celebs] lookup failed: {e}")
         return []
     FACES.mkdir(parents=True, exist_ok=True)
-    # globally known first (articles in many languages), each group in trending order
-    order = [q for q in dict.fromkeys(ranked) if q in cands]
-    order = [q for q in order if cands[q]["fame"] >= MIN_FAME] + [q for q in order if cands[q]["fame"] < MIN_FAME]
     out = []
     for qid in order:
         p = cands[qid]

@@ -14,13 +14,13 @@ from engine.melodies import MELODIES
 from planner.validate import presets_for
 
 HOOKS = {
-    "escape_rings": [
-        "Can the ball escape all {rings} rings?",
-        "{rings} rings. One ball. Can it escape?",
-        "Will it escape before time runs out?",
-        "Guess the escape time 👇",
-        "Bet it can't escape all {rings} rings",
-        "How fast can it break {rings} rings?",
+    "escape_rings": [  # {{X}} = deadline seconds, filled in by the engine
+        "Will it escape in {{X}} seconds?",
+        "{rings} rings. {{X}} seconds. Can it escape?",
+        "Escape all {rings} rings in {{X}}s? 👇",
+        "Bet it can't escape in {{X}} seconds",
+        "{{X}} seconds on the clock. Will it make it?",
+        "Yes or no: out in {{X}} seconds? 👇",
     ],
     "color_race": [
         "Which color wins? Pick one 👇",
@@ -186,7 +186,7 @@ def add_famous(raw: dict, rng: random.Random, history: list) -> bool:
         return False
     from planner import celebs
     recent_people = {name for h in history[-3:] for name in h.get("players") or []}
-    pool = celebs.fetch(n_max=10, exclude=recent_people)
+    pool = celebs.fetch(n_max=10, exclude=recent_people, seed=rng.randrange(2**31))
     if len(pool) < 4:
         print(f"[plan] only {len(pool)} trending people with free photos; using colored balls")
         return False

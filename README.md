@@ -31,10 +31,13 @@ QA any file: `python -m qa.check output/test.mp4`.
 
 ## Formats
 
-- **escape_rings**: "Can the ball escape all N rings?" Rotating rings with gaps; each escape shatters a ring.
+- **escape_rings**: "Will it escape in X seconds?" Rotating rings with gaps; each escape shatters a ring.
+  A seeded coin flip decides win or loss, then X (a multiple of 5) is set just above the real escape time
+  (win) or just below it (loss: the clock runs out with rings left).
 - **color_race**: "Which color wins?" A Plinko race down a scrolling peg board, first across the line wins.
-  On race days the balls become people trending on Wikipedia (living adults: athletes, musicians, actors,
-  creators, politicians) using free-licensed Wikimedia Commons photos, credited in the caption.
+  On race days the balls become famous people: up to 2 household names trending on Wikipedia plus global
+  superstars (living adults: athletes, musicians, actors, creators, politicians), using free-licensed
+  Wikimedia Commons photos, credited in the caption.
   Set the repo variable `FAMOUS_FACES=off` to use plain colors.
 - **zombie_outbreak**: "Will anyone survive?" Zombies chase fleeing humans across a city block; ends in HUMANITY LOST, HUMANS WIN or N SURVIVORS.
 

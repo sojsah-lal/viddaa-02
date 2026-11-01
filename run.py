@@ -79,6 +79,8 @@ def main():
         summary("## ❌ QA failed\n" + "\n".join(f"- {p}" for p in issues))
         sys.exit(1)
     print(f"[qa] OK — {video.name} ({result['duration']}s, {result['result']})")
+    if "deadline" in result:  # escape_rings picks its deadline while rendering
+        cfg["hook"] = cfg["hook"].replace("{X}", str(result["deadline"])).replace("{x}", str(result["deadline"]))
 
     caption = caption_text(cfg)
     (OUTPUT / "config.json").write_text(json.dumps(cfg, indent=2, ensure_ascii=False), encoding="utf-8")
