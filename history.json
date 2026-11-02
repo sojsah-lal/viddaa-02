@@ -184,5 +184,23 @@
     "source": "preset",
     "result": "missed the 25s deadline, 2 rings left",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-02",
+    "format": "zombie_outbreak",
+    "hook": "How long can 150 humans last?",
+    "palette": [
+      "#2EC4B6",
+      "#FFBE0B",
+      "#B5179E",
+      "#E63946",
+      "#3A86FF",
+      "#80ED99"
+    ],
+    "melody": "canon_in_d",
+    "seed": 2069398634,
+    "source": "preset",
+    "result": "humans win, 135 survivors",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
