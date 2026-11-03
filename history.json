@@ -202,5 +202,31 @@
     "source": "preset",
     "result": "humans win, 135 survivors",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-03",
+    "format": "color_race",
+    "hook": "Mbappé, Rihanna or 4 more? Pick 👇",
+    "palette": [
+      "#FFD60A",
+      "#4CC9F0",
+      "#F72585",
+      "#06D6A0",
+      "#7209B7",
+      "#FF8500"
+    ],
+    "melody": "fur_elise",
+    "seed": 1250532850,
+    "source": "preset+famous",
+    "result": "ronaldo wins",
+    "publish": "SEND_TO_USER_INBOX",
+    "players": [
+      "Kylian Mbappé",
+      "Rihanna",
+      "Cristiano Ronaldo",
+      "Dwayne Johnson",
+      "Elon Musk",
+      "LeBron James"
+    ]
   }
 ]
