@@ -228,5 +228,23 @@
       "Elon Musk",
       "LeBron James"
     ]
+  },
+  {
+    "date": "2026-11-04",
+    "format": "zombie_outbreak",
+    "hook": "1 zombies vs 83 humans. Bet?",
+    "palette": [
+      "#B5179E",
+      "#3A86FF",
+      "#E63946",
+      "#2EC4B6",
+      "#80ED99",
+      "#FFBE0B"
+    ],
+    "melody": "mountain_king",
+    "seed": 798467764,
+    "source": "preset",
+    "result": "humanity lost in 33.6s",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
