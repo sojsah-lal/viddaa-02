@@ -246,5 +246,30 @@
     "source": "preset",
     "result": "humanity lost in 33.6s",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-05",
+    "format": "color_race",
+    "hook": "Bush, Sheeran or 3 more? Pick 👇",
+    "palette": [
+      "#2EC4B6",
+      "#3A86FF",
+      "#B5179E",
+      "#FFBE0B",
+      "#80ED99",
+      "#E63946"
+    ],
+    "melody": "frere_jacques",
+    "seed": 876887032,
+    "source": "preset+famous",
+    "result": "obama wins",
+    "publish": "SEND_TO_USER_INBOX",
+    "players": [
+      "George W. Bush",
+      "Ed Sheeran",
+      "Stephen Curry",
+      "Barack Obama",
+      "Jisoo"
+    ]
   }
 ]
