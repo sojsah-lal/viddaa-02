@@ -271,5 +271,23 @@
       "Barack Obama",
       "Jisoo"
     ]
+  },
+  {
+    "date": "2026-11-06",
+    "format": "zombie_outbreak",
+    "hook": "How long can 56 humans last?",
+    "palette": [
+      "#FF6B35",
+      "#00F5D4",
+      "#9B5DE5",
+      "#FEE440",
+      "#F15BB5",
+      "#00BBF9"
+    ],
+    "melody": "canon_in_d",
+    "seed": 1334709149,
+    "source": "preset",
+    "result": "2 survivors at time's up",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
