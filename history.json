@@ -289,5 +289,23 @@
     "source": "preset",
     "result": "2 survivors at time's up",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-07",
+    "format": "escape_rings",
+    "hook": "Will it escape in 15 seconds?",
+    "palette": [
+      "#7CFF4D",
+      "#C77DFF",
+      "#FF9F1C",
+      "#FF4D6D",
+      "#FFD24D",
+      "#4DD2FF"
+    ],
+    "melody": "twinkle",
+    "seed": 84580283,
+    "source": "preset",
+    "result": "missed the 15s deadline, 3 rings left",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
