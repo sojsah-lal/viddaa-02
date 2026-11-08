@@ -307,5 +307,23 @@
     "source": "preset",
     "result": "missed the 15s deadline, 3 rings left",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-08",
+    "format": "color_race",
+    "hook": "Pick a color. Prove you're lucky.",
+    "palette": [
+      "#8AC926",
+      "#1982C4",
+      "#FF924C",
+      "#FFCA3A",
+      "#FF595E",
+      "#6A4C93"
+    ],
+    "melody": "mountain_king",
+    "seed": 1072588206,
+    "source": "preset",
+    "result": "orange wins",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
