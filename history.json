@@ -325,5 +325,23 @@
     "source": "preset",
     "result": "orange wins",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-09",
+    "format": "escape_rings",
+    "hook": "20 seconds on the clock. Will it make it?",
+    "palette": [
+      "#7CFF4D",
+      "#C77DFF",
+      "#FFD24D",
+      "#FF9F1C",
+      "#4DD2FF",
+      "#FF4D6D"
+    ],
+    "melody": "ode_to_joy",
+    "seed": 1863085372,
+    "source": "preset",
+    "result": "missed the 20s deadline, 5 rings left",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
