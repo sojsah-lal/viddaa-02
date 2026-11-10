@@ -343,5 +343,31 @@
     "source": "preset",
     "result": "missed the 20s deadline, 5 rings left",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-10",
+    "format": "color_race",
+    "hook": "Alcaraz, Trump or 4 more? Pick 👇",
+    "palette": [
+      "#FEE440",
+      "#F15BB5",
+      "#00F5D4",
+      "#9B5DE5",
+      "#FF6B35",
+      "#00BBF9"
+    ],
+    "melody": "canon_in_d",
+    "seed": 802607050,
+    "source": "preset+famous",
+    "result": "musk wins",
+    "publish": "SEND_TO_USER_INBOX",
+    "players": [
+      "Carlos Alcaraz",
+      "Donald Trump",
+      "Selena Gomez",
+      "Taylor Swift",
+      "Ed Sheeran",
+      "Elon Musk"
+    ]
   }
 ]
