@@ -369,5 +369,23 @@
       "Ed Sheeran",
       "Elon Musk"
     ]
+  },
+  {
+    "date": "2026-11-11",
+    "format": "zombie_outbreak",
+    "hook": "One bite and it spreads. Survivors?",
+    "palette": [
+      "#FFBE0B",
+      "#B5179E",
+      "#80ED99",
+      "#3A86FF",
+      "#2EC4B6",
+      "#E63946"
+    ],
+    "melody": "fur_elise",
+    "seed": 1933484883,
+    "source": "preset",
+    "result": "63 survivors at time's up",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
