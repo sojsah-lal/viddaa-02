@@ -387,5 +387,29 @@
     "source": "preset",
     "result": "63 survivors at time's up",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-12",
+    "format": "color_race",
+    "hook": "Jennie, Neymar or 2 more? Pick 👇",
+    "palette": [
+      "#00F5D4",
+      "#9B5DE5",
+      "#FEE440",
+      "#F15BB5",
+      "#FF6B35",
+      "#00BBF9"
+    ],
+    "melody": "mountain_king",
+    "seed": 1607456982,
+    "source": "preset+famous",
+    "result": "jennie wins",
+    "publish": "SEND_TO_USER_INBOX",
+    "players": [
+      "Jennie",
+      "Neymar",
+      "Tom Holland",
+      "Cristiano Ronaldo"
+    ]
   }
 ]
