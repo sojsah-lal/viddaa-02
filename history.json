@@ -411,5 +411,23 @@
       "Tom Holland",
       "Cristiano Ronaldo"
     ]
+  },
+  {
+    "date": "2026-11-13",
+    "format": "escape_rings",
+    "hook": "Will it escape in 20 seconds?",
+    "palette": [
+      "#F15BB5",
+      "#00BBF9",
+      "#FF6B35",
+      "#00F5D4",
+      "#9B5DE5",
+      "#FEE440"
+    ],
+    "melody": "twinkle",
+    "seed": 380318633,
+    "source": "preset",
+    "result": "escaped in 17.2s (deadline 20s)",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
