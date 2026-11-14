@@ -429,5 +429,31 @@
     "source": "preset",
     "result": "escaped in 17.2s (deadline 20s)",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-14",
+    "format": "color_race",
+    "hook": "Trump, Lisa or 4 more? Pick 👇",
+    "palette": [
+      "#FF595E",
+      "#8AC926",
+      "#1982C4",
+      "#FF924C",
+      "#6A4C93",
+      "#FFCA3A"
+    ],
+    "melody": "canon_in_d",
+    "seed": 1446430655,
+    "source": "preset+famous",
+    "result": "musk wins",
+    "publish": "SEND_TO_USER_INBOX",
+    "players": [
+      "Donald Trump",
+      "Lisa",
+      "Elon Musk",
+      "Taylor Swift",
+      "LeBron James",
+      "Lionel Messi"
+    ]
   }
 ]
