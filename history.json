@@ -455,5 +455,23 @@
       "LeBron James",
       "Lionel Messi"
     ]
+  },
+  {
+    "date": "2026-11-15",
+    "format": "zombie_outbreak",
+    "hook": "How long can 67 humans last?",
+    "palette": [
+      "#FEE440",
+      "#FF6B35",
+      "#00BBF9",
+      "#9B5DE5",
+      "#00F5D4",
+      "#F15BB5"
+    ],
+    "melody": "fur_elise",
+    "seed": 616961669,
+    "source": "preset",
+    "result": "11 survivors at time's up",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
