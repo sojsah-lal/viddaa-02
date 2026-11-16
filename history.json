@@ -473,5 +473,23 @@
     "source": "preset",
     "result": "11 survivors at time's up",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-16",
+    "format": "escape_rings",
+    "hook": "Bet it can't escape in 35 seconds",
+    "palette": [
+      "#E63946",
+      "#B5179E",
+      "#80ED99",
+      "#3A86FF",
+      "#FFBE0B",
+      "#2EC4B6"
+    ],
+    "melody": "mountain_king",
+    "seed": 1015968754,
+    "source": "preset",
+    "result": "escaped in 30.3s (deadline 35s)",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
