@@ -491,5 +491,23 @@
     "source": "preset",
     "result": "escaped in 30.3s (deadline 35s)",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-17",
+    "format": "zombie_outbreak",
+    "hook": "Will anyone survive the outbreak?",
+    "palette": [
+      "#B5179E",
+      "#FFBE0B",
+      "#E63946",
+      "#80ED99",
+      "#2EC4B6",
+      "#3A86FF"
+    ],
+    "melody": "frere_jacques",
+    "seed": 1985581711,
+    "source": "preset",
+    "result": "26 survivors at time's up",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
