@@ -509,5 +509,23 @@
     "source": "preset",
     "result": "26 survivors at time's up",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-18",
+    "format": "escape_rings",
+    "hook": "Bet it can't escape in 20 seconds",
+    "palette": [
+      "#FFCA3A",
+      "#1982C4",
+      "#8AC926",
+      "#FF595E",
+      "#FF924C",
+      "#6A4C93"
+    ],
+    "melody": "twinkle",
+    "seed": 1756239326,
+    "source": "preset",
+    "result": "escaped in 18.3s (deadline 20s)",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
