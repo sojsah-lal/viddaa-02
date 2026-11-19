@@ -527,5 +527,31 @@
     "source": "preset",
     "result": "escaped in 18.3s (deadline 20s)",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-19",
+    "format": "color_race",
+    "hook": "Cruise, Johnson or 4 more? Pick 👇",
+    "palette": [
+      "#F15BB5",
+      "#FEE440",
+      "#FF6B35",
+      "#9B5DE5",
+      "#00F5D4",
+      "#00BBF9"
+    ],
+    "melody": "ode_to_joy",
+    "seed": 413123915,
+    "source": "preset+famous",
+    "result": "trump wins",
+    "publish": "SEND_TO_USER_INBOX",
+    "players": [
+      "Tom Cruise",
+      "Dwayne Johnson",
+      "Jennie",
+      "Jung Kook",
+      "Donald Trump",
+      "Xi Jinping"
+    ]
   }
 ]
