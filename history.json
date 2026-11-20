@@ -553,5 +553,23 @@
       "Donald Trump",
       "Xi Jinping"
     ]
+  },
+  {
+    "date": "2026-11-20",
+    "format": "zombie_outbreak",
+    "hook": "1 zombies vs 150 humans. Bet?",
+    "palette": [
+      "#4DD2FF",
+      "#FF4D6D",
+      "#FFD24D",
+      "#FF9F1C",
+      "#7CFF4D",
+      "#C77DFF"
+    ],
+    "melody": "mountain_king",
+    "seed": 673928089,
+    "source": "preset",
+    "result": "21 survivors at time's up",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
