@@ -571,5 +571,29 @@
     "source": "preset",
     "result": "21 survivors at time's up",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-21",
+    "format": "color_race",
+    "hook": "Alcaraz vs MrBeast vs Swift vs Gomez. Pick one 👇",
+    "palette": [
+      "#FF6B35",
+      "#00F5D4",
+      "#F15BB5",
+      "#FEE440",
+      "#00BBF9",
+      "#9B5DE5"
+    ],
+    "melody": "fur_elise",
+    "seed": 142083741,
+    "source": "preset+famous",
+    "result": "mrbeast wins",
+    "publish": "SEND_TO_USER_INBOX",
+    "players": [
+      "Carlos Alcaraz",
+      "MrBeast",
+      "Taylor Swift",
+      "Selena Gomez"
+    ]
   }
 ]
