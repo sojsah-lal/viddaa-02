@@ -595,5 +595,23 @@
       "Taylor Swift",
       "Selena Gomez"
     ]
+  },
+  {
+    "date": "2026-11-22",
+    "format": "zombie_outbreak",
+    "hook": "Humans or zombies? Pick a side 👇",
+    "palette": [
+      "#06D6A0",
+      "#F72585",
+      "#4CC9F0",
+      "#7209B7",
+      "#FFD60A",
+      "#FF8500"
+    ],
+    "melody": "frere_jacques",
+    "seed": 814942665,
+    "source": "preset",
+    "result": "8 survivors at time's up",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
