@@ -631,5 +631,23 @@
     "source": "preset",
     "result": "escaped in 17.5s (deadline 20s)",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-24",
+    "format": "zombie_outbreak",
+    "hook": "2 zombies vs 103 humans. Bet?",
+    "palette": [
+      "#7CFF4D",
+      "#FFD24D",
+      "#FF9F1C",
+      "#4DD2FF",
+      "#FF4D6D",
+      "#C77DFF"
+    ],
+    "melody": "ode_to_joy",
+    "seed": 1717795806,
+    "source": "preset",
+    "result": "59 survivors at time's up",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
