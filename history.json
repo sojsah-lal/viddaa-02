@@ -649,5 +649,31 @@
     "source": "preset",
     "result": "59 survivors at time's up",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-25",
+    "format": "color_race",
+    "hook": "Cruise, Sheeran or 4 more? Pick 👇",
+    "palette": [
+      "#FEE440",
+      "#FF6B35",
+      "#9B5DE5",
+      "#00F5D4",
+      "#00BBF9",
+      "#F15BB5"
+    ],
+    "melody": "fur_elise",
+    "seed": 121499787,
+    "source": "preset+famous",
+    "result": "trump wins",
+    "publish": "SEND_TO_USER_INBOX",
+    "players": [
+      "Tom Cruise",
+      "Ed Sheeran",
+      "Taylor Swift",
+      "Elon Musk",
+      "Jisoo",
+      "Donald Trump"
+    ]
   }
 ]
