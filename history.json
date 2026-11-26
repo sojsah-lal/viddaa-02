@@ -675,5 +675,23 @@
       "Jisoo",
       "Donald Trump"
     ]
+  },
+  {
+    "date": "2026-11-26",
+    "format": "zombie_outbreak",
+    "hook": "How long can 150 humans last?",
+    "palette": [
+      "#E63946",
+      "#FFBE0B",
+      "#80ED99",
+      "#3A86FF",
+      "#B5179E",
+      "#2EC4B6"
+    ],
+    "melody": "frere_jacques",
+    "seed": 1932034004,
+    "source": "preset",
+    "result": "humanity lost in 30.8s",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
