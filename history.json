@@ -693,5 +693,23 @@
     "source": "preset",
     "result": "humanity lost in 30.8s",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-27",
+    "format": "escape_rings",
+    "hook": "Bet it can't escape in 35 seconds",
+    "palette": [
+      "#06D6A0",
+      "#FFD60A",
+      "#7209B7",
+      "#F72585",
+      "#4CC9F0",
+      "#FF8500"
+    ],
+    "melody": "twinkle",
+    "seed": 1455889323,
+    "source": "preset",
+    "result": "missed the 35s deadline, 1 ring left",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
