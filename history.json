@@ -711,5 +711,23 @@
     "source": "preset",
     "result": "missed the 35s deadline, 1 ring left",
     "publish": "SEND_TO_USER_INBOX"
+  },
+  {
+    "date": "2026-11-28",
+    "format": "zombie_outbreak",
+    "hook": "Can the humans fight back in time?",
+    "palette": [
+      "#00F5D4",
+      "#FF6B35",
+      "#9B5DE5",
+      "#F15BB5",
+      "#FEE440",
+      "#00BBF9"
+    ],
+    "melody": "ode_to_joy",
+    "seed": 903707946,
+    "source": "preset",
+    "result": "1 survivor at time's up",
+    "publish": "SEND_TO_USER_INBOX"
   }
 ]
